@@ -1,0 +1,1 @@
+# Classes pour gérer des exceptions personnalisées

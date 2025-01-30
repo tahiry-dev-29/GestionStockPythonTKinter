@@ -1,0 +1,1 @@
+# Interface pour afficher les messages d'erreur

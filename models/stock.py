@@ -1,0 +1,1 @@
+# Classe pour gérer les mouvements de stock

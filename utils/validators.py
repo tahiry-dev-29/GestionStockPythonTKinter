@@ -1,0 +1,1 @@
+# Validation des champs utilisateur/produit

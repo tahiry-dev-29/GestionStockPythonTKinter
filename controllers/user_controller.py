@@ -1,0 +1,1 @@
+# Logique métier pour les utilisateurs
