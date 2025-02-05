@@ -19,7 +19,7 @@
 # pip install openpyxl
 
 
-mysql-connector-python==8.0.33
+mysql-connector-python==8.0.32
 tk
 pytest==7.3.2
 # reportlab==3.6.0

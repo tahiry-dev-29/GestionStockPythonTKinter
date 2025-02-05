@@ -1,1 +1,0 @@
-# Interface principale de l'application
