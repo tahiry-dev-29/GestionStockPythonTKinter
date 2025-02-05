@@ -37,10 +37,17 @@ class StockManagementApp:
         self.current_window = None
         self.current_window = LoginWindow(self.root, self.show_dashboard)
 
-    def show_dashboard(self):
-        if self.current_window:
-            self.current_window.destroy()
-        self.current_window = DashboardWindow(self.root, self.show_login)
+    def show_dashboard(self, register=False):
+        """
+        Callback pour la navigation. Si register=True, 
+        on navigue vers register au lieu du dashboard
+        """
+        if register:
+            self.show_register()
+        else:
+            if self.current_window:
+                self.current_window.destroy()
+            self.current_window = DashboardWindow(self.root, self.show_login)
 
     def run(self):
         self.root.mainloop()

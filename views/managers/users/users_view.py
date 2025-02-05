@@ -1,19 +1,23 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from models.user_manager import UserManager
 from styles.colors import *
-from database import DBManager
 
 class UsersView:
     def __init__(self, parent):
         self.parent = parent
-        self.db = DBManager()
+        self.user_manager = UserManager()
+        
+        self.frame = tk.Frame(self.parent, bg=BG_COLOR)
+        self.frame.pack(fill='both', expand=True)
+        
         self.setup_ui()
         self.load_users()
 
     def setup_ui(self):
-        # Frame principal
-        self.frame = tk.Frame(self.parent, bg=BG_COLOR, padx=20, pady=20)
-        self.frame.pack(fill='both', expand=True)
+        # Header
+        header = tk.Frame(self.frame, bg=BG_COLOR)
+        header.pack(fill='x', padx=20, pady=10)
 
         # Titre
         tk.Label(
@@ -59,7 +63,7 @@ class UsersView:
             self.tree.delete(item)
             
         # Load users from database
-        users = self.db.get_users()
+        users = self.user_manager.get_users()
         for user in users:
             self.tree.insert("", "end", values=user)
 
@@ -69,7 +73,7 @@ class UsersView:
         
         if username and password:
             try:
-                self.db.insert_user(username, password)
+                self.user_manager.insert_user(username, password)
                 self.load_users()
                 self.clear_form()
                 messagebox.showinfo("Success", "User added successfully!")
@@ -90,7 +94,7 @@ class UsersView:
         
         if username and password:
             try:
-                self.db.update_user(user_id, username, password)
+                self.user_manager.update_user(user_id, username, password)
                 self.load_users()
                 self.clear_form()
                 messagebox.showinfo("Success", "User updated successfully!")
@@ -106,7 +110,7 @@ class UsersView:
         if messagebox.askyesno("Confirm", "Are you sure you want to delete this user?"):
             user_id = self.tree.item(selection[0])['values'][0]
             try:
-                self.db.delete_user(user_id)
+                self.user_manager.delete_user(user_id)
                 self.load_users()
                 self.clear_form()
                 messagebox.showinfo("Success", "User deleted successfully!")

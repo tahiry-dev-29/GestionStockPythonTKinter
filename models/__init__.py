@@ -2,8 +2,8 @@
 Models package for database entities and business logic
 """
 
+from .user_manager import UserManager
 from .product import Product
-from .category import Category
-from .user import User
+from .stock import Stock
 
-__all__ = ['Product', 'Category', 'User']
+__all__ = ['UserManager', 'Product', 'Stock']

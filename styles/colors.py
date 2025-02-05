@@ -25,7 +25,14 @@ BUTTON_STYLE = {
     "cursor": "hand2"
 }
 
-# Entry styles
+# Label styles
+LABEL_STYLE = {
+    "font": NORMAL_FONT,
+    "bg": "white",
+    "fg": TEXT_COLOR,
+}
+
+# Entry styles (remove bg from here since it's handled in the labels)
 ENTRY_STYLE = {
     "font": NORMAL_FONT,
     "bg": INPUT_BG,
