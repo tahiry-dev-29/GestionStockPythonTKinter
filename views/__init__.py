@@ -1,7 +1,11 @@
-from .login.login import LoginWindow
-from .register.register import RegisterWindow
-from .dashboard.dashboard import DashboardWindow
+"""
+Views package for GUI components and layouts
+"""
 
-__all__ = ['LoginWindow', 'RegisterWindow', 'DashboardWindow']
+from .dashboard.dashboard import DashboardWindow
+from .auth.login import LoginWindow
+from .auth.register import RegisterWindow
+
+__all__ = ['DashboardWindow', 'LoginWindow', 'RegisterWindow']
 
 

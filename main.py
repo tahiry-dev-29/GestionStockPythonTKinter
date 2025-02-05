@@ -1,22 +1,20 @@
-import tkinter as tk
-from views.login.login import LoginWindow
-from views.dashboard.dashboard import DashboardWindow
-from database.db_manager import DBManager
+from tkinter import *
+from views import DashboardWindow, LoginWindow, RegisterWindow
+from database import DBManager
 from styles.colors import BG_COLOR
-from controllers.auth_controller import AuthController
 
 class StockManagementApp:
     def __init__(self):
-        self.root = tk.Tk()
+        self.root = Tk()
         self.setup_main_window()
         self.current_window = None
-        self.auth_controller = AuthController()
+        self.db_manager = DBManager()
         self.show_login()
 
     def setup_main_window(self):
         self.root.title("Stock Management System")
         self.root.configure(bg=BG_COLOR)
-        self.center_window(1200, 700)  # Augmenter la taille de la fenêtre
+        self.center_window(1100, 600)  # Augmenter la taille de la fenêtre
         self.root.update_idletasks()  # Forcer la mise à jour de la géométrie
 
     def center_window(self, width, height):
@@ -30,19 +28,18 @@ class StockManagementApp:
     def show_register(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = None  # Important: reset current_window
+        self.current_window = None 
         self.current_window = RegisterWindow(self.root, self.show_login)
 
     def show_login(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = None  # Important: reset current_window
+        self.current_window = None
         self.current_window = LoginWindow(self.root, self.show_dashboard)
 
     def show_dashboard(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = None
         self.current_window = DashboardWindow(self.root, self.show_login)
 
     def run(self):
