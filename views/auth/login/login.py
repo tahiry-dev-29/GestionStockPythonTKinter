@@ -29,7 +29,7 @@ class LoginWindow:
         card.pack()
 
         # Logo
-        logo_label = tk.Label(card, text="🔐", font=("Helvetica", 48), bg='white', fg=PRIMARY_COLOR)
+        logo_label = tk.Label(card, text="🔐", font=("Helvetica", 28), bg='white', fg=PRIMARY_COLOR)
         logo_label.pack(pady=(0, 10))
 
         # Title
@@ -62,7 +62,7 @@ class LoginWindow:
     def navigate_to_register(self):
         self.frame.destroy()
         # Utiliser le callback pour naviguer vers register depuis main.py
-        self.show_dashboard_callback(register=True)  # Ajoutez un paramètre pour indiquer la navigation vers register
+        self.show_dashboard_callback(register=True)
 
     def login_user(self):
         email = self.entry_email.get()
@@ -72,7 +72,7 @@ class LoginWindow:
             if self.db_manager.verify_user_by_email(email, password):
                 messagebox.showinfo("Success", "Login Successful")
                 self.frame.destroy()  # Clean up the login frame
-                self.show_dashboard_callback()  # Show the dashboard
+                self.show_dashboard_callback()
             else:
                 messagebox.showerror("Error", "Invalid Email or Password")
         except Exception as e:

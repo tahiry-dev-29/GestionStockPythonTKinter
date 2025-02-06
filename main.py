@@ -14,11 +14,10 @@ class StockManagementApp:
     def setup_main_window(self):
         self.root.title("Stock Management System")
         self.root.configure(bg=BG_COLOR)
-        self.center_window(1100, 600)  # Augmenter la taille de la fenêtre
-        self.root.update_idletasks()  # Forcer la mise à jour de la géométrie
+        self.center_window(1100, 650)
+        self.root.update_idletasks()
 
     def center_window(self, width, height):
-        # Centrer la fenêtre sur l'écran
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width - width) // 2

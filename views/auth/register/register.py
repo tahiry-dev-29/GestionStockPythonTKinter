@@ -22,14 +22,14 @@ class RegisterWindow:
         
         # Card border
         card_border = tk.Frame(container, bg=PRIMARY_COLOR)
-        card_border.place(x=-2, y=-2, width=404, height=604)
+        card_border.place(x=-2, y=-2, width=504, height=704)
         
         # Main card
         card = tk.Frame(container, bg='white', padx=40, pady=30)
         card.pack()
 
         # Logo and Title
-        tk.Label(card, text="📝", font=("Helvetica", 48), bg='white', fg=PRIMARY_COLOR).pack(pady=(0, 10))
+        tk.Label(card, text="📝", font=("Helvetica", 28), bg='white', fg=PRIMARY_COLOR).pack(pady=(0, 10))
         tk.Label(card, text="Create Account", font=TITLE_FONT, bg='white', fg=TEXT_COLOR).pack(pady=(0, 20))
 
         # Username field
@@ -54,7 +54,7 @@ class RegisterWindow:
 
         # Register button
         register_btn = tk.Button(card, text="Register", command=self.register_user, **BUTTON_STYLE)
-        register_btn.pack(fill='x', ipady=10, pady=(0, 20))
+        register_btn.pack(fill='x', ipady=10, pady=(0, 15))
 
         # Login link
         tk.Label(card, text="Already have an account?", bg='white', fg="#666666").pack()

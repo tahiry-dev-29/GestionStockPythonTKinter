@@ -1,133 +1,181 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from models.user_manager import UserManager
+from controllers.user_controller import UserController
+from .dialogs.update_dialog import UpdateUserDialog
+from styles.theme import Theme
 from styles.colors import *
 
 class UsersView:
     def __init__(self, parent):
         self.parent = parent
-        self.user_manager = UserManager()
+        self.controller = UserController()
+        self.theme = Theme()
         
         self.frame = tk.Frame(self.parent, bg=BG_COLOR)
-        self.frame.pack(fill='both', expand=True)
+        self.frame.pack(fill='both', expand=True, padx=30, pady=20)
         
         self.setup_ui()
+        self.setup_treeview_style()
         self.load_users()
 
     def setup_ui(self):
-        # Header
         header = tk.Frame(self.frame, bg=BG_COLOR)
-        header.pack(fill='x', padx=20, pady=10)
+        header.pack(fill='x', pady=(0, 25))
 
-        # Titre
+        title_frame = tk.Frame(header, bg=BG_COLOR)
+        title_frame.pack(fill='x')
+
         tk.Label(
-            self.frame,
+            title_frame,
             text="Users Management",
-            font=TITLE_FONT,
+            font=("Helvetica", 24, "bold"),
             bg=BG_COLOR,
             fg=TEXT_COLOR
-        ).pack(pady=(0, 20))
+        ).pack(side='left')
 
-        # Zone des formulaires
-        form_frame = tk.Frame(self.frame, bg=BG_COLOR)
-        form_frame.pack(fill='x', pady=10)
+        tk.Label(
+            self.frame,
+            text="Double-click on a user to edit",
+            font=("Helvetica", 12),
+            bg=BG_COLOR,
+            fg="#666666"
+        ).pack(pady=(0, 15))
 
-        # Champs du formulaire
-        self.username_var = tk.StringVar()
-        self.password_var = tk.StringVar()
+        self.table_container = tk.Frame(self.frame, bg=BG_COLOR)
+        self.table_container.pack(fill='both', expand=True)
 
-        tk.Label(form_frame, text="Username:", bg=BG_COLOR).pack(side='left', padx=5)
-        tk.Entry(form_frame, textvariable=self.username_var, **ENTRY_STYLE).pack(side='left', padx=5)
+        self.setup_table()
+
+    def setup_treeview_style(self):
+        style = ttk.Style()
+        treeview_style = self.theme.setup_treeview_style()
         
-        tk.Label(form_frame, text="Password:", bg=BG_COLOR).pack(side='left', padx=5)
-        tk.Entry(form_frame, textvariable=self.password_var, show="•", **ENTRY_STYLE).pack(side='left', padx=5)
+        style.configure(
+            treeview_style["style_name"],
+            **treeview_style["settings"]
+        )
+        
+        heading_style = treeview_style["heading_style"].copy()
+        heading_style.update({
+            'font': ("Helvetica", 11, "bold"),
+            'padding': 10
+        })
+        style.configure(
+            f"{treeview_style['style_name']}.Heading",
+            **heading_style
+        )
+        
+        style.configure(
+            f"{treeview_style['style_name']}.Treeview",
+            rowheight=35,
+            borderwidth=0
+        )
+        
+        style.map(
+            f"{treeview_style['style_name']}.Treeview",
+            background=[('selected', '#2196F3')],
+            foreground=[('selected', 'white')]
+        )
 
-        # Boutons CRUD
-        buttons_frame = tk.Frame(form_frame, bg=BG_COLOR)
-        buttons_frame.pack(side='left', padx=5)
+    def setup_table(self):
+        columns = Theme.get_table_columns()
+        
+        table_frame = tk.Frame(self.table_container, bg="white", bd=1, relief="solid")
+        table_frame.pack(fill='both', expand=True)
+        
+        self.tree = ttk.Treeview(
+            table_frame,
+            columns=tuple(columns.keys()),
+            show="headings",
+            style="Custom.Treeview",
+            height=15
+        )
 
-        tk.Button(buttons_frame, text="Add", command=self.add_user, **BUTTON_STYLE).pack(side='left', padx=2)
-        tk.Button(buttons_frame, text="Update", command=self.update_user, **BUTTON_STYLE).pack(side='left', padx=2)
-        tk.Button(buttons_frame, text="Delete", command=self.delete_user, **BUTTON_STYLE).pack(side='left', padx=2)
+        y_scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=y_scrollbar.set)
 
-        # Table
-        self.tree = ttk.Treeview(self.frame, columns=("ID", "Username"), show="headings")
-        self.tree.heading("ID", text="ID")
-        self.tree.heading("Username", text="Username")
-        self.tree.pack(fill='both', expand=True, pady=10)
-        self.tree.bind('<<TreeviewSelect>>', self.on_select)
+        self.tree.pack(side='left', fill='both', expand=True)
+        y_scrollbar.pack(side='right', fill='y')
+
+        for col, props in columns.items():
+            self.tree.heading(col, text=col)
+            self.tree.column(col, **props)
+
+        self.tree.bind("<Double-1>", self.on_item_double_click)
+        self.tree.bind("<Motion>", self.on_hover)
+        self.tree.tag_configure("hover", background="#E3F2FD")
+
+    def on_item_double_click(self, event):
+        selected_item = self.tree.focus()
+        if not selected_item:
+            return
+        user_data = self.get_user_data_from_item(selected_item)
+        self.show_update_dialog(user_data)
+
+    def get_user_data_from_item(self, item):
+        values = self.tree.item(item)['values']
+        return {
+            'id': values[0],
+            'username': values[1],
+            'email': values[2],
+            'role': values[3]
+        }
 
     def load_users(self):
-        # Clear existing items
         for item in self.tree.get_children():
             self.tree.delete(item)
-            
-        # Load users from database
-        users = self.user_manager.get_users()
+
+        users = self.controller.get_all_users()
         for user in users:
-            self.tree.insert("", "end", values=user)
+            self.tree.insert("", "end", values=(
+                user['id'],
+                user['username'],
+                user['email'],
+                user['role'],
+            ))
 
-    def add_user(self):
-        username = self.username_var.get()
-        password = self.password_var.get()
-        
-        if username and password:
-            try:
-                self.user_manager.insert_user(username, password)
+    def delete_user(self, user_id, username):
+        try:
+            if self.controller.delete_user(user_id, username):
                 self.load_users()
-                self.clear_form()
-                messagebox.showinfo("Success", "User added successfully!")
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-        else:
-            messagebox.showerror("Error", "Please fill all fields")
+                messagebox.showinfo("Success", f"User {username} has been deleted successfully")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to delete user: {str(e)}")
 
-    def update_user(self):
-        selection = self.tree.selection()
-        if not selection:
-            messagebox.showwarning("Warning", "Please select a user to update")
-            return
-            
-        user_id = self.tree.item(selection[0])['values'][0]
-        username = self.username_var.get()
-        password = self.password_var.get()
-        
-        if username and password:
-            try:
-                self.user_manager.update_user(user_id, username, password)
+    def handle_update(self, data):
+        try:
+            if self.controller.update_user(data):
                 self.load_users()
-                self.clear_form()
-                messagebox.showinfo("Success", "User updated successfully!")
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
+                messagebox.showinfo("Success", f"User {data['username']} has been updated successfully")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update user: {str(e)}")
 
-    def delete_user(self):
-        selection = self.tree.selection()
-        if not selection:
-            messagebox.showwarning("Warning", "Please select a user to delete")
-            return
-            
-        if messagebox.askyesno("Confirm", "Are you sure you want to delete this user?"):
-            user_id = self.tree.item(selection[0])['values'][0]
-            try:
-                self.user_manager.delete_user(user_id)
+    def show_update_dialog(self, user_data):
+        dialog = UpdateUserDialog(
+            self.frame,
+            user_data,
+            on_update=self.handle_update,
+            on_delete=lambda: self.delete_user(user_data['id'], user_data['username'])
+        )
+
+    def refresh_data(self):
+        self.load_users()
+        messagebox.showinfo("Success", "Data refreshed successfully!")
+
+    def handle_add(self, data):
+        try:
+            if self.controller.create_user(data):
                 self.load_users()
-                self.clear_form()
-                messagebox.showinfo("Success", "User deleted successfully!")
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
+                messagebox.showinfo("Success", f"User {data['username']} has been added successfully")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to add user: {str(e)}")
 
-    def on_select(self, event):
-        selection = self.tree.selection()
-        if selection:
-            item = self.tree.item(selection[0])
-            username = item['values'][1]
-            self.username_var.set(username)
-            self.password_var.set("")  # Clear password for security
-
-    def clear_form(self):
-        self.username_var.set("")
-        self.password_var.set("")
+    def on_hover(self, event):
+        item = self.tree.identify_row(event.y)
+        if item:
+            for row in self.tree.get_children():
+                self.tree.item(row, tags=())
+            self.tree.item(item, tags=("hover",))
 
     def destroy(self):
         self.frame.destroy()

@@ -6,6 +6,7 @@ TEXT_COLOR = "#333333"
 CARD_BG = "white"
 INPUT_BG = "#F8F9FA"
 HOVER_COLOR = "#1976D2"
+DANGER_COLOR = "#f44336"
 
 # Styles
 TITLE_FONT = ("Helvetica", 24, "bold")
@@ -20,8 +21,8 @@ BUTTON_STYLE = {
     "fg": "white",
     "font": BUTTON_FONT,
     "relief": "flat",
-    "padx": 20,
-    "pady": 10,
+    "padx": 10,
+    "pady":5,
     "cursor": "hand2"
 }
 
@@ -46,5 +47,36 @@ CARD_STYLE = {
     "bg": CARD_BG,
     "relief": "solid",
     "bd": 1
+}
+
+# Table styles
+TABLE_STYLE = {
+    "background": "#ffffff",
+    "fieldbackground": "#ffffff",
+    "foreground": TEXT_COLOR,
+    "font": ("Helvetica", 10),
+    "rowheight": 40
+}
+
+# Action button styles
+ACTION_BUTTON_STYLE = {
+    "font": ("Helvetica", 9),
+    "borderwidth": 0,
+    "relief": "flat",
+    "cursor": "hand2",
+    "padx": 10,
+    "pady": 5,
+}
+
+UPDATE_BUTTON_STYLE = {
+    **ACTION_BUTTON_STYLE,
+    "bg": PRIMARY_COLOR,
+    "fg": "white",
+}
+
+DELETE_BUTTON_STYLE = {
+    **ACTION_BUTTON_STYLE,
+    "bg": "#ff4444",
+    "fg": "white",
 }
 

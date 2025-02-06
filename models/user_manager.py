@@ -4,8 +4,16 @@ class UserManager:
     def __init__(self):
         self.db = DbConnection()
 
+    def get_users(self):
+        """Alias for get_all_users for backward compatibility"""
+        return self.get_all_users()
+
     def get_all_users(self):
-        query = "SELECT id, username, email, role, created_at FROM users"
+        query = """
+            SELECT id, username, email, role, created_at 
+            FROM users 
+            ORDER BY created_at DESC
+        """
         return self.db.fetch_all(query)
 
     def create_user(self, username, email, password, role="user"):
@@ -14,10 +22,19 @@ class UserManager:
         return self.db.execute(query, (username, email, password, role))
 
     def update_user(self, user_id, data):
-        query = """UPDATE users SET username=%s, email=%s, role=%s 
-                  WHERE id=%s"""
-        return self.db.execute(query, (data['username'], data['email'], 
-                                     data['role'], user_id))
+        query = """
+            UPDATE users 
+            SET username = %s, 
+                email = %s, 
+                role = %s 
+            WHERE id = %s
+        """
+        return self.db.execute(query, (
+            data['username'],
+            data['email'],
+            data['role'],
+            user_id
+        ))
 
     def delete_user(self, user_id):
         query = "DELETE FROM users WHERE id=%s"

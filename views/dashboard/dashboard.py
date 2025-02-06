@@ -1,28 +1,43 @@
 import tkinter as tk
 from tkinter import ttk
 from styles.colors import *
-from views.managers.users.user_manager import UserManagerView
+from views.managers.users.users_view import UsersView
 
 class DashboardWindow:
     def __init__(self, root, show_login_callback):
         self.root = root
         self.show_login_callback = show_login_callback
-        self.current_view = None  # Initialisation de current_view
         
+        # Main container
         self.frame = tk.Frame(self.root, bg=BG_COLOR)
         self.frame.pack(fill='both', expand=True)
         
-        # Create main layout
-        self.create_layout()
+        # Initialize content frame before creating layout
+        self.content_frame = None
+        self.current_view = None
+        
+        self.setup_ui()
         self.show_default_view()
 
-    def create_layout(self):
+    def setup_ui(self):
         # Create sidebar
+        self.create_sidebar()
+        # Create content area
+        self.create_content_area()
+
+    def create_sidebar(self):
         self.sidebar = tk.Frame(self.frame, bg=PRIMARY_COLOR, width=250)
         self.sidebar.pack(side='left', fill='y')
         self.sidebar.pack_propagate(False)
         
-        # Logo area
+        # Logo
+        self.create_logo()
+        # Menu items
+        self.create_menu_items()
+        # Logout button
+        self.create_logout_button()
+
+    def create_logo(self):
         logo_frame = tk.Frame(self.sidebar, bg=PRIMARY_COLOR)
         logo_frame.pack(fill='x', pady=20)
         
@@ -34,24 +49,17 @@ class DashboardWindow:
             fg="white"
         ).pack(pady=10)
 
-        # Menu items
-        self.create_menu_item("Dashboard", self.show_default_view)
-        self.create_menu_item("User Management", self.show_user_manager)
-        self.create_menu_item("Products", self.show_products)
-        self.create_menu_item("Categories", self.show_categories)
-        self.create_menu_item("Reports", self.show_reports)
+    def create_menu_items(self):
+        menu_items = [
+            ("📊 Dashboard", self.show_default_view),
+            ("👥 User Management", self.show_user_manager),
+            ("📦 Stock Management", self.show_stock_manager),
+            ("🏷️ Categories", self.show_categories),
+            ("📈 Reports", self.show_reports)
+        ]
         
-        # Logout button at bottom of sidebar
-        tk.Button(
-            self.sidebar,
-            text="Logout",
-            command=self.logout,
-            **BUTTON_STYLE
-        ).pack(side='bottom', pady=20, padx=20, fill='x')
-
-        # Main content area
-        self.content_frame = tk.Frame(self.frame, bg=BG_COLOR)
-        self.content_frame.pack(side='right', fill='both', expand=True)
+        for text, command in menu_items:
+            self.create_menu_item(text, command)
 
     def create_menu_item(self, text, command):
         btn = tk.Button(
@@ -75,20 +83,33 @@ class DashboardWindow:
         btn.bind('<Enter>', lambda e: btn.configure(bg=HOVER_COLOR))
         btn.bind('<Leave>', lambda e: btn.configure(bg=PRIMARY_COLOR))
 
+    def create_logout_button(self):
+        tk.Button(
+            self.sidebar,
+            text="Logout",
+            command=self.logout,
+            **BUTTON_STYLE
+        ).pack(side='bottom', pady=20, padx=20, fill='x')
+
+    def create_content_area(self):
+        # Create main content area
+        self.content_frame = tk.Frame(self.frame, bg=BG_COLOR)
+        self.content_frame.pack(side='right', fill='both', expand=True)
+
     def clear_content(self):
-        if self.current_view:
+        if hasattr(self, 'current_view') and self.current_view:
             self.current_view.destroy()
-        for widget in self.content_frame.winfo_children():
-            widget.destroy()
+        
+        if hasattr(self, 'content_frame') and self.content_frame:
+            for widget in self.content_frame.winfo_children():
+                widget.destroy()
 
     def show_user_manager(self):
         self.clear_content()
-        from views.managers.users.users_view import UsersView  # Import local pour éviter les imports circulaires
         self.current_view = UsersView(self.content_frame)
 
     def show_default_view(self):
         self.clear_content()
-        # Add default dashboard content here
         tk.Label(
             self.content_frame,
             text="Welcome to Dashboard",
@@ -96,8 +117,24 @@ class DashboardWindow:
             bg=BG_COLOR
         ).pack(pady=20)
 
-    # ... other view methods (show_products, show_categories, etc.) ...
+    def show_products(self):
+        pass  # À implémenter
+
+    def show_categories(self):
+        pass  # À implémenter
+
+    def show_reports(self):
+        pass  # À implémenter
+
+    def show_stock_manager(self):
+        self.clear_content()
+        # Import here to avoid circular imports
+        from views.managers.stocks.stock import StockWindow
+        self.current_view = StockWindow(self.content_frame)
 
     def logout(self):
         self.frame.destroy()
         self.show_login_callback()
+
+    def destroy(self):
+        self.frame.destroy()
