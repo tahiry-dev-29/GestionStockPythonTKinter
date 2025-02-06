@@ -80,3 +80,18 @@ DELETE_BUTTON_STYLE = {
     "fg": "white",
 }
 
+
+# Styles
+BUTTON_STYLE = {
+    'font': BUTTON_FONT,
+    'bg': PRIMARY_COLOR,
+    'fg': 'white',
+    'activebackground': SECONDARY_COLOR,
+    'activeforeground': 'white',
+    'relief': 'flat',
+    'padx': 15,
+    'pady': 8,
+    'cursor': 'hand2'
+}
+
+

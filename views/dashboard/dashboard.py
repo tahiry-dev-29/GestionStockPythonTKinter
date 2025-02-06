@@ -121,7 +121,9 @@ class DashboardWindow:
         pass  # À implémenter
 
     def show_categories(self):
-        pass  # À implémenter
+        self.clear_content()
+        from views.managers.categories.categories_view import CategoriesView
+        self.current_view = CategoriesView(self.content_frame)
 
     def show_reports(self):
         pass  # À implémenter
