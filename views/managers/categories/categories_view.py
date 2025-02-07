@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from styles.colors import *
 from controllers.category_controller import CategoryController
 from styles.theme import *
+from .update_categ_view import UpdateCategoryDialog
 
 class CategoriesView(tk.Frame):
     def __init__(self, parent):
@@ -78,20 +79,29 @@ class CategoriesView(tk.Frame):
             fieldbackground=SURFACE_COLOR,
             foreground=TEXT_PRIMARY,
             rowheight=40,
-            font=TEXT_FONT
+            font=TEXT_FONT,
+            borderwidth=0,
+            relief="flat"
         )
         style.configure(
             "Treeview.Heading",
             background=PRIMARY_COLOR,
             foreground="white",
             font=SUBTITLE_FONT,
-            relief="flat"
+            relief="flat",
+            borderwidth=0,
+            padding=10
         )
         style.map(
             "Treeview",
             background=[("selected", SECONDARY_COLOR)],
-            foreground=[("selected", "white")]
+            foreground=[("selected", "white")],
+            relief=[("selected", "flat")]
         )
+        
+        # Add alternating row colors
+        self.tree.tag_configure('oddrow', background='#f5f5f5')
+        self.tree.tag_configure('evenrow', background=SURFACE_COLOR)
 
     def load_categories(self):
         # Clear existing items
@@ -100,9 +110,12 @@ class CategoriesView(tk.Frame):
         
         # Load categories from database using the controller
         categories = self.controller.get_all_categories()
-        for category in categories:
+        for i, category in enumerate(categories):
             # Format the date for display
             created_at = category.created_at.strftime('%Y-%m-%d %H:%M') if category.created_at else ''
+            
+            # Add row with alternating colors
+            tag = 'evenrow' if i % 2 == 0 else 'oddrow'
             
             self.tree.insert('', 'end', values=(
                 category.id,
@@ -111,7 +124,7 @@ class CategoriesView(tk.Frame):
                 created_at,  # Add created_at to display
                 "📝 Edit",
                 "🗑️ Delete"
-            ))
+            ), tags=(tag,))
 
     def show_add_category_dialog(self):
         self.show_dialog_safely(self._create_add_dialog)
@@ -175,7 +188,7 @@ class CategoriesView(tk.Frame):
         dialog.geometry(f'{width}x{height}+{x}+{y}')
 
     def show_edit_dialog(self, category_id, name, description):
-        self.show_dialog_safely(self._create_edit_dialog, category_id, name, description)
+        UpdateCategoryDialog(self, category_id, name, description, self.controller, self.load_categories)
 
     def confirm_delete(self, category_id):
         self.show_dialog_safely(self._create_delete_dialog, category_id)
@@ -208,94 +221,6 @@ class CategoriesView(tk.Frame):
             **BUTTON_STYLE
         )
         save_button.pack(side="right")
-
-    def _create_edit_dialog(self, dialog, category_id, name, description):
-        dialog.configure(**DIALOG_STYLE)
-        dialog.title("Edit Category")
-        dialog.geometry("400x300")
-        
-        # Make dialog modal
-        dialog.transient(self)
-        
-        # Wait for dialog to be ready before grab_set
-        self.after(100, lambda: dialog.grab_set())
-        
-        # Handle dialog close
-        def on_dialog_close():
-            self.current_dialog = None
-            dialog.destroy()
-            
-        dialog.protocol("WM_DELETE_WINDOW", on_dialog_close)
-        
-        # Center the dialog
-        dialog.update_idletasks()
-        width = dialog.winfo_width()
-        height = dialog.winfo_height()
-        x = (dialog.winfo_screenwidth() // 2) - (width // 2)
-        y = (dialog.winfo_screenheight() // 2) - (height // 2)
-        dialog.geometry(f'{width}x{height}+{x}+{y}')
-        
-        # Create main frame
-        main_frame = tk.Frame(dialog, padx=20, pady=20)
-        main_frame.pack(fill='both', expand=True)
-        
-        # Name field
-        name_frame = tk.Frame(main_frame)
-        name_frame.pack(fill='x', pady=(0, 10))
-        
-        tk.Label(name_frame, text="Name:", anchor='w').pack(fill='x')
-        name_entry = tk.Entry(name_frame)
-        name_entry.insert(0, name)
-        name_entry.pack(fill='x', pady=(5, 0))
-        
-        # Description field
-        desc_frame = tk.Frame(main_frame)
-        desc_frame.pack(fill='both', expand=True)
-        
-        tk.Label(desc_frame, text="Description:", anchor='w').pack(fill='x')
-        desc_entry = tk.Text(desc_frame, height=5)
-        desc_entry.insert("1.0", description)
-        desc_entry.pack(fill='both', expand=True, pady=(5, 0))
-        
-        # Buttons frame
-        button_frame = tk.Frame(main_frame)
-        button_frame.pack(fill='x', pady=(20, 0))
-        
-        def cancel():
-            dialog.destroy()
-            
-        def save():
-            new_name = name_entry.get().strip()
-            new_description = desc_entry.get("1.0", tk.END).strip()
-            
-            if not new_name:
-                messagebox.showwarning("Warning", "Name is required!", parent=dialog)
-                return
-                
-            if self.controller.update_category(category_id, new_name, new_description):
-                self.load_categories()
-                self.current_dialog = None
-                dialog.destroy()
-                messagebox.showinfo("Success", "Category updated successfully!")
-            else:
-                messagebox.showerror("Error", "Failed to update category", parent=dialog)
-
-        # Cancel button
-        tk.Button(
-            button_frame,
-            text="Cancel",
-            command=cancel,
-            width=15
-        ).pack(side='left', padx=(0, 10))
-        
-        # Save button
-        tk.Button(
-            button_frame,
-            text="Save",
-            command=save,
-            width=15,
-            **BUTTON_STYLE
-        ).pack(side='right')
 
     def _create_delete_dialog(self, dialog, category_id):
         # Configuration de base du dialogue
