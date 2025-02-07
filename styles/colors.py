@@ -1,29 +1,48 @@
-# Couleurs
-PRIMARY_COLOR = "#2196F3"
-SECONDARY_COLOR = "#FFC107"
-BG_COLOR = "#F5F5F5"
-TEXT_COLOR = "#333333"
-CARD_BG = "white"
-INPUT_BG = "#F8F9FA"
-HOVER_COLOR = "#1976D2"
-DANGER_COLOR = "#f44336"
+# Main colors
+PRIMARY_COLOR = "#2196F3"  # Blue
+SECONDARY_COLOR = "#1976D2"  # Darker Blue
+ACCENT_COLOR = "#FFC107"  # Amber
 
-# Styles
+# Background colors
+BG_COLOR = "#F5F5F5"  # Light Gray
+SURFACE_COLOR = "#FFFFFF"  # White
+INPUT_BG = "#FFFFFF"  # White background for inputs
+CARD_BG = "#FFFFFF"  # White background for cards
+
+# Text colors
+TEXT_COLOR = "#212121"  # Almost Black
+TEXT_PRIMARY = "#212121"  # Almost Black
+TEXT_SECONDARY = "#757575"  # Gray
+TEXT_DISABLED = "#BDBDBD"  # Light Gray
+
+# Status colors
+SUCCESS_COLOR = "#4CAF50"  # Green
+WARNING_COLOR = "#FF9800"  # Orange
+DANGER_COLOR = "#F44336"  # Red
+INFO_COLOR = "#03A9F4"  # Light Blue
+
+# Interactive colors
+HOVER_COLOR = "#1565C0"  # Darker blue for hover
+ACTIVE_COLOR = "#0D47A1"  # Even darker blue for click/active state
+
+# Font configurations
 TITLE_FONT = ("Helvetica", 24, "bold")
 SUBTITLE_FONT = ("Helvetica", 14)
 HEADER_FONT = ("Helvetica", 16, "bold")
 NORMAL_FONT = ("Helvetica", 12)
 BUTTON_FONT = ("Helvetica", 12, "bold")
 
-# Button styles
+# Basic styles
 BUTTON_STYLE = {
     "bg": PRIMARY_COLOR,
     "fg": "white",
     "font": BUTTON_FONT,
     "relief": "flat",
     "padx": 10,
-    "pady":5,
-    "cursor": "hand2"
+    "pady": 5,
+    "cursor": "hand2",
+    "activebackground": ACTIVE_COLOR,
+    "activeforeground": "white"
 }
 
 # Label styles
@@ -51,8 +70,8 @@ CARD_STYLE = {
 
 # Table styles
 TABLE_STYLE = {
-    "background": "#ffffff",
-    "fieldbackground": "#ffffff",
+    "background": SURFACE_COLOR,
+    "fieldbackground": SURFACE_COLOR,
     "foreground": TEXT_COLOR,
     "font": ("Helvetica", 10),
     "rowheight": 40
@@ -78,20 +97,6 @@ DELETE_BUTTON_STYLE = {
     **ACTION_BUTTON_STYLE,
     "bg": "#ff4444",
     "fg": "white",
-}
-
-
-# Styles
-BUTTON_STYLE = {
-    'font': BUTTON_FONT,
-    'bg': PRIMARY_COLOR,
-    'fg': 'white',
-    'activebackground': SECONDARY_COLOR,
-    'activeforeground': 'white',
-    'relief': 'flat',
-    'padx': 15,
-    'pady': 8,
-    'cursor': 'hand2'
 }
 
 

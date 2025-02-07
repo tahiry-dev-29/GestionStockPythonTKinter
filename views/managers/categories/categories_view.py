@@ -2,10 +2,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from styles.colors import *
 from controllers.category_controller import CategoryController
+from styles.theme import *
 
 class CategoriesView(tk.Frame):
     def __init__(self, parent):
-        super().__init__(parent, bg=BG_COLOR)
+        super().__init__(parent, **FRAME_STYLE)
         self.pack(fill='both', expand=True)
         self.controller = CategoryController()
         self.current_dialog = None  # Track active dialog
@@ -38,7 +39,7 @@ class CategoriesView(tk.Frame):
 
     def create_categories_table(self):
         # Table Frame
-        table_frame = tk.Frame(self, bg=BG_COLOR)
+        table_frame = tk.Frame(self, **FRAME_STYLE)
         table_frame.pack(fill='both', expand=True, padx=20, pady=20)
         
         # Create Treeview
@@ -69,7 +70,26 @@ class CategoriesView(tk.Frame):
         
         # Style the tree
         style = ttk.Style()
-        style.configure("Treeview", rowheight=30)
+        style.configure(
+            "Treeview",
+            background=SURFACE_COLOR,
+            fieldbackground=SURFACE_COLOR,
+            foreground=TEXT_PRIMARY,
+            rowheight=40,
+            font=TEXT_FONT
+        )
+        style.configure(
+            "Treeview.Heading",
+            background=PRIMARY_COLOR,
+            foreground="white",
+            font=SUBTITLE_FONT,
+            relief="flat"
+        )
+        style.map(
+            "Treeview",
+            background=[("selected", SECONDARY_COLOR)],
+            foreground=[("selected", "white")]
+        )
 
     def load_categories(self):
         # Clear existing items
@@ -83,8 +103,8 @@ class CategoriesView(tk.Frame):
                 category.id,
                 category.name,
                 category.description,
-                "✏️",  # Edit symbol
-                "🗑️"   # Delete symbol
+                "📝 Edit",  # Edit symbol
+                "🗑️ Delete"   # Delete symbol
             ))
 
     def show_add_category_dialog(self):
@@ -155,41 +175,36 @@ class CategoriesView(tk.Frame):
         self.show_dialog_safely(self._create_delete_dialog, category_id)
 
     def _create_add_dialog(self, dialog):
+        dialog.configure(**DIALOG_STYLE)
         dialog.title("Add Category")
         
-        # Form fields
-        tk.Label(dialog, text="Name:").pack(pady=10)
-        name_entry = tk.Entry(dialog)
-        name_entry.pack(pady=5)
+        # Form fields with styled entries
+        name_label = tk.Label(dialog, text="Name:", font=SUBTITLE_FONT, bg=BG_COLOR)
+        name_label.pack(pady=(0, 5), anchor="w")
         
-        tk.Label(dialog, text="Description:").pack(pady=10)
-        desc_entry = tk.Text(dialog, height=5)
-        desc_entry.pack(pady=5)
+        name_entry = tk.Entry(dialog, **ENTRY_STYLE)
+        name_entry.pack(fill="x", pady=(0, 15))
         
-        def save():
-            name = name_entry.get().strip()
-            description = desc_entry.get("1.0", tk.END).strip()
-            
-            if not name:
-                messagebox.showwarning("Warning", "Name is required!", parent=dialog)
-                return
-                
-            if self.controller.create_category(name, description):
-                self.load_categories()
-                self.current_dialog = None
-                dialog.destroy()
-                messagebox.showinfo("Success", "Category added successfully!")
-            else:
-                messagebox.showerror("Error", "Failed to add category", parent=dialog)
-
-        tk.Button(
-            dialog,
+        desc_label = tk.Label(dialog, text="Description:", font=SUBTITLE_FONT, bg=BG_COLOR)
+        desc_label.pack(pady=(0, 5), anchor="w")
+        
+        desc_entry = tk.Text(dialog, height=5, **ENTRY_STYLE)
+        desc_entry.pack(fill="both", expand=True, pady=(0, 20))
+        
+        # Button area
+        button_frame = tk.Frame(dialog, bg=BG_COLOR)
+        button_frame.pack(fill="x", pady=(20, 0))
+        
+        save_button = tk.Button(
+            button_frame,
             text="Save",
-            command=save,
+            command=lambda: self.save_category(dialog, name_entry, desc_entry),
             **BUTTON_STYLE
-        ).pack(pady=20)
+        )
+        save_button.pack(side="right")
 
     def _create_edit_dialog(self, dialog, category_id, name, description):
+        dialog.configure(**DIALOG_STYLE)
         dialog.title("Edit Category")
         dialog.geometry("400x300")
         
@@ -277,69 +292,105 @@ class CategoriesView(tk.Frame):
         ).pack(side='right')
 
     def _create_delete_dialog(self, dialog, category_id):
-        dialog.title("Confirm Delete")
-        dialog.geometry("300x150")
+        # Configuration de base du dialogue
+        dialog.configure(bg=BG_COLOR)
+        dialog.title("Confirmer la suppression")
+        dialog.geometry("350x200")
         
-        # Make dialog modal
-        dialog.transient(self)
-        dialog.grab_set()  # Make dialog modal
+        # Container principal
+        container = tk.Frame(dialog, bg=BG_COLOR, padx=20, pady=10)
+        container.pack(fill='both', expand=True)
         
-        # Center the dialog
-        dialog.update_idletasks()
-        width = dialog.winfo_width()
-        height = dialog.winfo_height()
-        x = (dialog.winfo_screenwidth() // 2) - (width // 2)
-        y = (dialog.winfo_screenheight() // 2) - (height // 2)
-        dialog.geometry(f'{width}x{height}+{x}+{y}')
+        # Icône d'avertissement
+        icon_label = tk.Label(
+            container,
+            text="⚠️",
+            font=(FONT_FAMILY, 48),
+            bg=BG_COLOR,
+            fg=WARNING_COLOR
+        )
+        icon_label.pack(pady=(0, 10))
         
-        # Handle dialog close
-        def on_dialog_close():
-            self.current_dialog = None
-            dialog.destroy()
-            
-        dialog.protocol("WM_DELETE_WINDOW", on_dialog_close)
+        # Message d'avertissement
+        message = tk.Label(
+            container,
+            text="Êtes-vous sûr de vouloir supprimer\ncette catégorie ?",
+            font=SUBTITLE_FONT,
+            bg=BG_COLOR,
+            fg=TEXT_PRIMARY,
+            justify='center'
+        )
+        message.pack(pady=(0, 20))
         
-        # Message
-        tk.Label(
-            dialog,
-            text="Are you sure you want to delete this category?",
-            wraplength=250,
-            pady=20
-        ).pack()
+        # Conteneur pour les boutons
+        button_container = tk.Frame(container, bg=BG_COLOR)
+        button_container.pack(fill='x', pady=(0, 10))
         
-        # Buttons frame
-        button_frame = tk.Frame(dialog)
-        button_frame.pack(pady=20)
-        
-        def cancel():
-            dialog.destroy()
-            
-        def confirm():
+        # Fonction de suppression
+        def confirm_delete():
             if self.controller.delete_category(category_id):
                 self.load_categories()
-                self.current_dialog = None
                 dialog.destroy()
-                messagebox.showinfo("Success", "Category deleted successfully!")
+                messagebox.showinfo("Succès", "Catégorie supprimée avec succès")
             else:
-                messagebox.showerror("Error", "Failed to delete category", parent=dialog)
+                messagebox.showerror("Erreur", "Impossible de supprimer la catégorie", parent=dialog)
         
-        # Cancel button
-        tk.Button(
-            button_frame,
-            text="Cancel",
-            command=cancel,
-            width=15
-        ).pack(side='left', padx=5)
+        # Boutons
+        cancel_btn = tk.Button(
+            button_container,
+            text="Annuler",
+            command=dialog.destroy,
+            bg=SURFACE_COLOR,
+            fg=TEXT_PRIMARY,
+            font=BUTTON_FONT,
+            padx=20,
+            pady=5,
+            relief="flat",
+            cursor="hand2"
+        )
+        cancel_btn.pack(side='left', padx=5, expand=True)
         
-        # Delete button
-        tk.Button(
-            button_frame,
-            text="Delete",
-            command=confirm,
-            width=15,
-            bg='red',
-            fg='white'
-        ).pack(side='left', padx=5)
+        confirm_btn = tk.Button(
+            button_container,
+            text="Supprimer",
+            command=confirm_delete,
+            bg=DANGER_COLOR,
+            fg="white",
+            font=BUTTON_FONT,
+            padx=20,
+            pady=5,
+            relief="flat",
+            cursor="hand2"
+        )
+        confirm_btn.pack(side='right', padx=5, expand=True)
+        
+        # Centrer le dialogue
+        self.center_dialog(dialog)
+
+    def _handle_delete(self, dialog, category_id):
+        if self.controller.delete_category(category_id):
+            self.load_categories()
+            dialog.destroy()
+            self.current_dialog = None
+            messagebox.showinfo("Success", "Category deleted successfully!")
+        else:
+            messagebox.showerror("Error", "Failed to delete category", parent=dialog)
+
+    def save_category(self, dialog, name_entry, desc_entry):
+        name = name_entry.get().strip()
+        description = desc_entry.get("1.0", tk.END).strip()
+        
+        if not name:
+            messagebox.showwarning("Warning", "Name is required!", parent=dialog)
+            return
+            
+        if self.controller.create_category(name, description):
+            self.load_categories()
+            self.current_dialog = None
+            dialog.destroy()
+            messagebox.showinfo("Success", "Category added successfully!")
+        else:
+            messagebox.showerror("Error", "Failed to add category", parent=dialog)
 
     # Remove unused methods
     def set_dialog_modal(self, dialog):
