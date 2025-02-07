@@ -27,6 +27,15 @@ class Category:
         )
 
     @staticmethod
+    def from_dict(data):
+        return Category(
+            id=data.get('id'),
+            name=data.get('name'),
+            description=data.get('description'),
+            created_at=data.get('created_at')
+        )
+
+    @staticmethod
     def create_table():
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()

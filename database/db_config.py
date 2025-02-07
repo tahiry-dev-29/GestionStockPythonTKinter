@@ -12,7 +12,7 @@ logging.basicConfig(
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'tahiry4534',  # Replace with your actual MySQL password
+    'password': 'tahiry4534',
     'database': 'gestion_stock_py',
     'raise_on_warnings': True
 }

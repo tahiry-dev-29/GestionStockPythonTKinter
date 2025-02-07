@@ -1,6 +1,6 @@
 from tkinter import *
 from views import DashboardWindow, LoginWindow, RegisterWindow
-from database import DBManager
+from database.db_manager import DBManager
 from styles.colors import BG_COLOR
 
 class StockManagementApp:

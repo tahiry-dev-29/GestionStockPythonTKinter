@@ -12,6 +12,7 @@ class DBManager:
         self.connection = None
         self.cursor = None
         self.connect()
+        self.create_tables_if_not_exist()
 
     def connect(self):
         try:
@@ -78,6 +79,18 @@ class DBManager:
                     )
                 """)
                 logging.info("✅ Stock movements table created successfully")
+
+            # Categories table
+            if not self.table_exists('categories'):
+                self.cursor.execute("""
+                    CREATE TABLE categories (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(100) NOT NULL UNIQUE,
+                        description TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                logging.info("✅ Categories table created successfully")
 
             self.connection.commit()
 
@@ -206,6 +219,69 @@ class DBManager:
             return True
         except Error as e:
             logging.error(f"❌ Error creating user: {e}")
+            self.connection.rollback()
+            return False
+
+    # Category management methods
+    def create_category(self, name, description=""):
+        try:
+            self.cursor.execute("""
+                INSERT INTO categories (name, description)
+                VALUES (%s, %s)
+            """, (name, description))
+            self.connection.commit()
+            logging.info(f"✅ New category created: {name}")
+            return True
+        except Error as e:
+            logging.error(f"❌ Error creating category: {e}")
+            self.connection.rollback()
+            return False
+
+    def get_all_categories(self):
+        try:
+            self.cursor.execute("SELECT * FROM categories")
+            return self.cursor.fetchall()
+        except Error as e:
+            logging.error(f"❌ Error fetching categories: {e}")
+            return []
+
+    def get_category_by_id(self, category_id):
+        try:
+            self.cursor.execute(
+                "SELECT * FROM categories WHERE id = %s",
+                (category_id,)
+            )
+            return self.cursor.fetchone()
+        except Error as e:
+            logging.error(f"❌ Error fetching category: {e}")
+            return None
+
+    def update_category(self, category_id, name, description):
+        try:
+            self.cursor.execute("""
+                UPDATE categories 
+                SET name = %s, description = %s 
+                WHERE id = %s
+            """, (name, description, category_id))
+            self.connection.commit()
+            logging.info(f"✅ Category updated: {name}")
+            return True
+        except Error as e:
+            logging.error(f"❌ Error updating category: {e}")
+            self.connection.rollback()
+            return False
+
+    def delete_category(self, category_id):
+        try:
+            self.cursor.execute(
+                "DELETE FROM categories WHERE id = %s", 
+                (category_id,)
+            )
+            self.connection.commit()
+            logging.info(f"✅ Category deleted: ID {category_id}")
+            return True
+        except Error as e:
+            logging.error(f"❌ Error deleting category: {e}")
             self.connection.rollback()
             return False
 

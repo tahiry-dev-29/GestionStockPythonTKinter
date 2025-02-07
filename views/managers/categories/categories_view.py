@@ -42,21 +42,23 @@ class CategoriesView(tk.Frame):
         table_frame = tk.Frame(self, **FRAME_STYLE)
         table_frame.pack(fill='both', expand=True, padx=20, pady=20)
         
-        # Create Treeview
-        columns = ('id', 'name', 'description', 'edit', 'delete')
+        # Create Treeview with added created_at column
+        columns = ('id', 'name', 'description', 'created_at', 'edit', 'delete')
         self.tree = ttk.Treeview(table_frame, columns=columns, show='headings')
         
         # Define column headings
         self.tree.heading('id', text='ID')
         self.tree.heading('name', text='Name')
         self.tree.heading('description', text='Description')
+        self.tree.heading('created_at', text='Created At')
         self.tree.heading('edit', text='Edit')
         self.tree.heading('delete', text='Delete')
         
         # Column widths
         self.tree.column('id', width=50)
         self.tree.column('name', width=150)
-        self.tree.column('description', width=300)
+        self.tree.column('description', width=250)
+        self.tree.column('created_at', width=150)  # Added width for created_at
         self.tree.column('edit', width=50)
         self.tree.column('delete', width=50)
         
@@ -96,15 +98,19 @@ class CategoriesView(tk.Frame):
         for item in self.tree.get_children():
             self.tree.delete(item)
         
-        # Load categories from database
+        # Load categories from database using the controller
         categories = self.controller.get_all_categories()
         for category in categories:
+            # Format the date for display
+            created_at = category.created_at.strftime('%Y-%m-%d %H:%M') if category.created_at else ''
+            
             self.tree.insert('', 'end', values=(
                 category.id,
                 category.name,
                 category.description,
-                "📝 Edit",  # Edit symbol
-                "🗑️ Delete"   # Delete symbol
+                created_at,  # Add created_at to display
+                "📝 Edit",
+                "🗑️ Delete"
             ))
 
     def show_add_category_dialog(self):
@@ -125,9 +131,9 @@ class CategoriesView(tk.Frame):
         column = self.tree.identify_column(event.x)
         values = self.tree.item(item)['values']
 
-        if column == '#4':  # Edit column
+        if column == '#5':  # Updated index for Edit column
             self.show_edit_dialog(values[0], values[1], values[2])
-        elif column == '#5':  # Delete column
+        elif column == '#6':  # Updated index for Delete column
             self.confirm_delete(values[0])
 
     def show_dialog_safely(self, dialog_func, *args):
