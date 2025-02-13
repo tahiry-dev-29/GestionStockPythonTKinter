@@ -62,7 +62,6 @@ class AddProductDialog(tk.Toplevel):
         self.create_field(row1, "Product Name:", "name_entry", side="left")
         self.create_category_field(row1, side="right")
 
-        # Ligne 2 : Prix et Quantité
         row2 = tk.Frame(parent, bg="#f9f9f9")
         row2.pack(fill="x", pady=5)
         self.create_field(row2, "Price:", "price_entry", side="left")
