@@ -28,6 +28,13 @@ class CategoryController:
             )
         return None
 
+    def get_category_by_name(self, category_name):
+        categories = self.get_all_categories()
+        for category in categories:
+            if category.name == category_name:
+                return category
+        return None
+
     def update_category(self, category_id, name, description):
         return self.db_manager.update_category(category_id, name, description)
 
