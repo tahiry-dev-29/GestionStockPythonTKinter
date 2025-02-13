@@ -1,10 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from styles.colors import *
-from styles.theme import Theme
-import os
-import hashlib  # Pour hasher le nom de l'image
-from PIL import Image  # Pour traiter l'image et la sauvegarder proprement
+from PIL import Image, ImageTk  # On utilise Image.LANCZOS pour le redimensionnement
+
 from controllers.category_controller import CategoryController
 from models.product import Product
 
@@ -14,22 +11,27 @@ class AddProductDialog(tk.Toplevel):
         super().__init__(parent)
         self.controller = controller
         self.on_add = on_add
-        self.current_dialog = None
-        self.theme = Theme.get_dialog_style()
 
-        self.configure(bg="#f5f5f5")
+        self.configure(bg="#f9f9f9")
         self.title("Add Product")
-        self.geometry("500x550")
+        self.geometry("500x630")
         self.resizable(False, False)
 
+        # Pour que la fenêtre soit toujours au-dessus de la fenêtre parente
         self.transient(parent)
         self.after(100, lambda: self.grab_set())
         self.protocol("WM_DELETE_WINDOW", self.on_dialog_close)
 
-        self.setup_ui()  # Organisation de l'interface
+        self.image_path = None
+        self.setup_ui()
+
+    def on_dialog_close(self):
+        """Ferme proprement la boîte de dialogue."""
+        self.destroy()
 
     def setup_ui(self):
-        container = tk.Frame(self, bg="#f5f5f5", padx=30, pady=30)
+        """Configure la disposition générale de la fenêtre."""
+        container = tk.Frame(self, bg="#f9f9f9", padx=30, pady=30)
         container.pack(fill="both", expand=True)
 
         self.create_title_label(container)
@@ -37,57 +39,96 @@ class AddProductDialog(tk.Toplevel):
         self.create_buttons(container)
 
     def create_title_label(self, parent):
+        """Crée et place le titre de la fenêtre."""
         tk.Label(
             parent,
             text="Add New Product",
             font=("Helvetica", 18, "bold"),
-            bg="#f5f5f5",
+            bg="#f9f9f9",
             fg="#333333",
         ).pack(pady=(0, 20))
 
     def create_form(self, parent):
-        form_frame = tk.Frame(parent, bg="#f5f5f5")
+        """Crée le formulaire (champs, combobox, etc.)."""
+        form_frame = tk.Frame(parent, bg="#f9f9f9")
         form_frame.pack(fill="x", pady=10)
         self.create_form_fields(form_frame)
 
     def create_form_fields(self, parent):
-        # Champ "Nom du produit"
-        self.create_field(parent, "Product Name:", "name_entry")
-        # Champ "Prix"
-        self.create_field(parent, "Price:", "price_entry")
-        # Champ "Quantité"
-        self.create_field(parent, "Quantity:", "quantity_entry")
-        # Champ "Photo" avec bouton Browse
-        self.create_photo_field(parent)
-        # Champ "Catégorie"
-        self.create_category_field(parent)
+        """Crée les champs du formulaire : Nom, Catégorie, Prix, Quantité, Photo."""
+        # Ligne 1 : Nom et Catégorie
+        row1 = tk.Frame(parent, bg="#f9f9f9")
+        row1.pack(fill="x", pady=5)
+        self.create_field(row1, "Product Name:", "name_entry", side="left")
+        self.create_category_field(row1, side="right")
 
-    def create_field(self, parent, label_text, entry_name):
+        # Ligne 2 : Prix et Quantité
+        row2 = tk.Frame(parent, bg="#f9f9f9")
+        row2.pack(fill="x", pady=5)
+        self.create_field(row2, "Price:", "price_entry", side="left")
+        self.create_field(row2, "Quantity:", "quantity_entry", side="right")
+
+        # Champ Photo et aperçu
+        self.create_photo_field(parent)
+        self.create_image_preview(parent)
+
+    def create_field(self, parent, label_text, entry_name, side="top"):
+        """
+        Crée un champ (Label + Entry).
+        - label_text : Texte du label.
+        - entry_name : Nom de l'attribut de la classe pour l'Entry.
+        - side : Positionnement dans le parent (left, right, top, etc.).
+        """
+        field_frame = tk.Frame(parent, bg="#f9f9f9")
+        field_frame.pack(fill="x", side=side, expand=True, padx=5)
+
         label = tk.Label(
-            parent,
+            field_frame,
             text=label_text,
             font=("Helvetica", 12),
-            bg="#f5f5f5",
+            bg="#f9f9f9",
             fg="#333333",
         )
-        label.pack(anchor="w", pady=(0, 5))
+        label.pack(anchor="w")
+
         entry = tk.Entry(
-            parent, font=("Helvetica", 11), bg="white", relief="solid", bd=1
+            field_frame, font=("Helvetica", 11), bg="white", relief="solid", bd=1
         )
-        entry.pack(fill="x", ipady=8, pady=(0, 10))
-        setattr(self, entry_name, entry)  # Permet d'accéder via self.name_entry, etc.
+        entry.pack(fill="x", ipady=8, pady=(0, 5))
+        entry.config(borderwidth=2, relief="solid", highlightthickness=0)
+        setattr(self, entry_name, entry)
+
+    def create_category_field(self, parent, side="top"):
+        """Crée un champ de sélection pour la catégorie."""
+        field_frame = tk.Frame(parent, bg="#f9f9f9")
+        field_frame.pack(fill="x", side=side, expand=True, padx=5)
+
+        label = tk.Label(
+            field_frame,
+            text="Category:",
+            font=("Helvetica", 12),
+            bg="#f9f9f9",
+            fg="#333333",
+        )
+        label.pack(anchor="w")
+
+        self.category_controller = CategoryController()
+        categories = self.category_controller.get_all_categories()
+        self.category_var = tk.StringVar()
+        self.category_combobox = ttk.Combobox(
+            field_frame, textvariable=self.category_var, font=("Helvetica", 11)
+        )
+        self.category_combobox["values"] = [category.name for category in categories]
+        self.category_combobox.pack(fill="x", ipady=8, pady=(0, 5))
 
     def create_photo_field(self, parent):
+        """Crée le champ pour sélectionner la photo."""
         photo_label = tk.Label(
-            parent,
-            text="Photo:",
-            font=("Helvetica", 12),
-            bg="#f5f5f5",
-            fg="#333333",
+            parent, text="Photo:", font=("Helvetica", 12), bg="#f9f9f9", fg="#333333"
         )
         photo_label.pack(anchor="w", pady=(0, 5))
 
-        photo_frame = tk.Frame(parent, bg="#f5f5f5")
+        photo_frame = tk.Frame(parent, bg="#f9f9f9")
         photo_frame.pack(fill="x", pady=(0, 10))
 
         self.photo_entry = tk.Entry(
@@ -100,47 +141,71 @@ class AddProductDialog(tk.Toplevel):
             text="Browse",
             command=self.browse_photo,
             font=("Helvetica", 11),
-            bg="#e0e0e0",
-            fg="#333333",
+            bg="#7C7C7C",
+            fg="white",
             padx=20,
             pady=10,
             relief="flat",
         )
         photo_button.pack(side="left", padx=(10, 0))
-        photo_button.bind("<Enter>", lambda e, b=photo_button: self.on_hover(b, True))
-        photo_button.bind("<Leave>", lambda e, b=photo_button: self.on_hover(b, False))
 
-    def create_category_field(self, parent):
-        category_label = tk.Label(
-            parent,
-            text="Category:",
-            font=("Helvetica", 12),
-            bg="#f5f5f5",
-            fg="#333333",
-        )
-        category_label.pack(anchor="w", pady=(0, 5))
+    def create_image_preview(self, parent):
+        """Crée la zone d'aperçu de l'image."""
+        self.image_preview_frame = tk.Frame(parent, bg="#f9f9f9")
+        self.image_preview_frame.pack(fill="both", expand=True, pady=(10, 20))
 
-        self.category_controller = CategoryController()
-        categories = self.category_controller.get_all_categories()
-        self.category_var = tk.StringVar()
-        self.category_combobox = ttk.Combobox(
-            parent,
-            textvariable=self.category_var,
-            font=("Helvetica", 11),
+        self.image_preview_label = tk.Label(
+            self.image_preview_frame, bg="white", relief="solid", bd=1
         )
-        self.category_combobox["values"] = [category.name for category in categories]
-        self.category_combobox.pack(fill="x", ipady=8, pady=(0, 15))
+        self.image_preview_label.pack(pady=10)
+
+    def browse_photo(self):
+        """Ouvre un dialogue pour sélectionner une photo et lance l'aperçu."""
+        file_path = filedialog.askopenfilename(
+            filetypes=[("Image files", "*.jpg *.jpeg *.png")]
+        )
+        if file_path:
+            self.image_path = file_path
+            self.photo_entry.delete(0, tk.END)
+            self.photo_entry.insert(0, file_path)
+            self.show_image_preview(file_path)
+
+    def show_image_preview(self, image_path):
+        """
+        Affiche l'image avec une hauteur fixe de 150px.
+        La largeur est ajustée pour préserver le ratio original.
+        """
+        try:
+            img = Image.open(image_path)
+            fixed_height = 150  # 🖼️ Hauteur fixe pour l'aperçu
+            img_width, img_height = img.size
+
+            # Calcul du ratio pour conserver le ratio original
+            ratio = fixed_height / img_height
+            new_height = fixed_height
+            new_width = int(img_width * ratio)
+
+            # Redimensionnement de l'image pour que la hauteur soit toujours de 150px
+            img = img.resize((new_width, new_height), resample=Image.LANCZOS)
+
+            img_tk = ImageTk.PhotoImage(img)
+            self.image_preview_label.configure(image=img_tk)
+            self.image_preview_label.image = img_tk
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Error displaying image: {e}")
 
     def create_buttons(self, parent):
-        button_frame = tk.Frame(parent, bg="#f5f5f5")
-        button_frame.pack(fill="x", pady=(20, 0), anchor="s", side="bottom")
+        """Crée les boutons de validation et d'annulation."""
+        button_frame = tk.Frame(parent, bg="#f9f9f9")
+        button_frame.pack(fill="x", pady=(20, 0))
 
         cancel_button = tk.Button(
             button_frame,
             text="Cancel",
             command=self.destroy,
             font=("Helvetica", 11),
-            bg="#e0e0e0",
+            bg="#f9f9f9",
             fg="#333333",
             padx=20,
             pady=10,
@@ -161,58 +226,20 @@ class AddProductDialog(tk.Toplevel):
         )
         save_button.pack(side="right", padx=5)
 
-        for btn in (cancel_button, save_button):
-            btn.bind("<Enter>", lambda e, b=btn: self.on_hover(b, True))
-            btn.bind("<Leave>", lambda e, b=btn: self.on_hover(b, False))
-
-    def on_hover(self, button, hovering):
-        if button["text"] in ["Cancel", "Browse"]:
-            button["bg"] = "#d0d0d0" if hovering else "#e0e0e0"
-        elif button["text"] == "Save":
-            button["bg"] = "#45a049" if hovering else "#4CAF50"
-
-    def browse_photo(self):
-        file_path = filedialog.askopenfilename(
-            filetypes=[("Image files", "*.jpg *.jpeg *.png")]
-        )
-        if file_path:
-            self.photo_entry.delete(0, tk.END)
-            self.photo_entry.insert(0, file_path)
-
-    def on_dialog_close(self):
-        self.current_dialog = None
-        self.destroy()
-
     def save(self):
+        """
+        Valide les champs, crée un objet Product et le transmet au contrôleur.
+        Affiche un message de succès ou d'erreur selon le résultat.
+        """
         name = self.name_entry.get().strip()
         price = self.price_entry.get().strip()
         quantity = self.quantity_entry.get().strip()
-        photo = self.photo_entry.get().strip()
+        photo = self.image_path
         category_name = self.category_var.get().strip()
 
-        if not os.path.exists("uploads"):
-            os.makedirs("uploads")
-
-        if photo:
-            try:
-                # Ouvrir l'image pour valider son contenu et la réenregistrer
-                img = Image.open(photo)
-                ext = os.path.splitext(photo)[1].lower()
-                filename = os.path.basename(photo)
-                # Hasher le nom de base pour obtenir un nom unique
-                hashed_name = hashlib.sha256(filename.encode()).hexdigest() + ext
-                destination = os.path.join("uploads", hashed_name)
-                # Sauvegarde via PIL pour garantir un format correct
-                img.save(destination)
-                photo = destination
-            except Exception as e:
-                messagebox.showerror(
-                    "Error", f"Error processing photo: {e}", parent=self
-                )
-                return
-
+        # Vérification que tous les champs sont remplis
         if not name or not price or not quantity or not category_name:
-            messagebox.showwarning("Warning", "All fields are required!", parent=self)
+            messagebox.showwarning("Warning", "All fields are required!")
             return
 
         try:
@@ -220,20 +247,15 @@ class AddProductDialog(tk.Toplevel):
             quantity = int(quantity)
         except ValueError:
             messagebox.showwarning(
-                "Warning",
-                "Price must be a number and Quantity must be an integer!",
-                parent=self,
+                "Warning", "Price must be a number and Quantity must be an integer!"
             )
             return
 
         category = self.category_controller.get_category_by_name(category_name)
         if not category:
-            messagebox.showerror(
-                "Error", "Selected category does not exist!", parent=self
-            )
+            messagebox.showerror("Error", "Selected category does not exist!")
             return
 
-        # La date de création sera automatiquement gérée par la base (DEFAULT CURRENT_TIMESTAMP)
         product = Product(
             name=name,
             price=price,
@@ -241,10 +263,10 @@ class AddProductDialog(tk.Toplevel):
             photo=photo,
             category_id=category.id,
         )
+
         if self.controller.create_product(product):
             self.on_add()
-            self.current_dialog = None
             self.destroy()
             messagebox.showinfo("Success", "Product added successfully!")
         else:
-            messagebox.showerror("Error", "Failed to add product", parent=self)
+            messagebox.showerror("Error", "Failed to add product")

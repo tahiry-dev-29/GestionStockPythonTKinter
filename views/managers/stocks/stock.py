@@ -1,3 +1,4 @@
+# stock_window.py
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, Label
 from PIL import Image, ImageTk
@@ -7,12 +8,13 @@ from styles.theme import Theme
 from .add_product_view import AddProductDialog
 from controllers.product_controller import ProductController
 from .update_products import UpdateProductDialog
+from controllers.category_controller import (
+    CategoryController,
+)  # pour récupérer les catégories
 
 
 class StockWindow:
-    _image_dialog_open = (
-        False  # Variable de classe pour suivre l'état du dialogue d'image
-    )
+    _image_dialog_open = False  # Flag pour la fenêtre d'image
 
     def __init__(self, parent):
         self.parent = parent
@@ -21,12 +23,19 @@ class StockWindow:
         self.frame.pack(fill="both", expand=True)
 
         self.controller = ProductController()
-        self.products = {}
+        self.products = (
+            {}
+        )  # Dictionnaire pour stocker les produits affichés (clé = item id du treeview)
+        self.all_products = []  # Liste complète des produits (pour filtrer)
         self.images = {}
         self.selected_item_id = None
         self.edit_button = None
         self.delete_button = None
         self.view_image_button = None
+        self._add_dialog_open = (
+            False  # Flag pour empêcher plusieurs fenêtres "Add" simultanées
+        )
+
         self.setup_ui()
 
     def setup_ui(self):
@@ -34,7 +43,7 @@ class StockWindow:
         header = tk.Frame(self.frame, bg=BG_COLOR)
         header.pack(fill="x", padx=20, pady=10)
 
-        # Frame pour le titre - prend toute la largeur
+        # Titre (prend toute la largeur)
         title_frame = tk.Frame(header, bg=BG_COLOR)
         title_frame.pack(fill="x", pady=10)
         tk.Label(
@@ -43,11 +52,9 @@ class StockWindow:
             font=TITLE_FONT,
             bg=BG_COLOR,
             fg=TEXT_COLOR,
-        ).pack(
-            side="left", fill="x", expand=True
-        )  # Titre prend toute la largeur
+        ).pack(side="left", fill="x", expand=True)
 
-        # Frame pour les boutons d'action - sur la ligne suivante
+        # Boutons d'actions
         actions_frame = tk.Frame(header, bg=BG_COLOR)
         actions_frame.pack(fill="x", pady=10)
 
@@ -94,7 +101,10 @@ class StockWindow:
         )
         self.view_image_button.pack(side="left", padx=5)
 
-        # --- Configuration de la table ---
+        # --- Section Filtrage par catégorie ---
+        self.setup_category_list()
+
+        # --- Table des produits ---
         self.table_container = tk.Frame(self.frame, bg=BG_COLOR)
         self.table_container.pack(fill="both", expand=True, padx=20, pady=10)
 
@@ -105,9 +115,10 @@ class StockWindow:
 
         self.setup_treeview_style()
 
+        # On ajoute une colonne "Category" en plus
         self.tree = ttk.Treeview(
             table_frame,
-            columns=("ID", "Name", "Quantity", "Price", "Created At"),
+            columns=("ID", "Name", "Category", "Quantity", "Price", "Created At"),
             show="headings",
             height=15,
             style="Custom.Treeview",
@@ -115,12 +126,14 @@ class StockWindow:
 
         self.tree.heading("ID", text="ID", anchor="center")
         self.tree.heading("Name", text="Name", anchor="center")
+        self.tree.heading("Category", text="Category", anchor="center")
         self.tree.heading("Quantity", text="Quantity", anchor="center")
         self.tree.heading("Price", text="Price", anchor="center")
         self.tree.heading("Created At", text="Created At", anchor="center")
 
         self.tree.column("ID", anchor="center", width=50)
         self.tree.column("Name", anchor="center", width=150)
+        self.tree.column("Category", anchor="center", width=100)
         self.tree.column("Quantity", anchor="center", width=100)
         self.tree.column("Price", anchor="center", width=100)
         self.tree.column("Created At", anchor="center", width=150)
@@ -144,7 +157,6 @@ class StockWindow:
         treeview_style = self.theme.setup_treeview_style()
         style_name = treeview_style.get("style_name", "Custom.Treeview")
         style.configure(style_name, **treeview_style.get("settings", {}))
-
         heading_style = treeview_style.get("heading_style", {}).copy()
         heading_style.update(
             {"font": ("Helvetica", 11, "bold"), "padding": 8, "relief": "flat"}
@@ -156,6 +168,55 @@ class StockWindow:
             background=[("selected", ACCENT_COLOR)],
             foreground=[("selected", TEXT_COLOR)],
         )
+
+    def setup_category_list(self):
+        # Crée une section affichant une Combobox pour filtrer par catégorie (comme dans le "Add")
+        category_frame = tk.Frame(self.frame, bg=BG_COLOR)
+        category_frame.pack(fill="x", padx=20, pady=5)
+        tk.Label(
+            category_frame,
+            text="Filter by Category:",
+            font=("Helvetica", 12, "bold"),
+            bg=BG_COLOR,
+            fg=TEXT_COLOR,
+        ).pack(side="left", padx=(0, 5))
+        try:
+            category_controller = CategoryController()
+            categories = category_controller.get_all_categories()
+            category_names = [category.name for category in categories]
+        except Exception as e:
+            print("Error loading categories:", e)
+            category_names = []
+        self.category_filter_var = tk.StringVar()
+        self.category_filter_combobox = ttk.Combobox(
+            category_frame,
+            textvariable=self.category_filter_var,
+            font=("Helvetica", 11),
+        )
+        self.category_filter_combobox["values"] = ["All"] + category_names
+        self.category_filter_combobox.current(0)
+        self.category_filter_combobox.pack(side="left", padx=(0, 5))
+        filter_button = tk.Button(
+            category_frame,
+            text="Filter",
+            command=self.filter_by_category,
+            **BUTTON_STYLE,
+        )
+        filter_button.pack(side="left", padx=5)
+
+    def filter_by_category(self):
+        selected_category = self.category_filter_var.get()
+        if selected_category == "All":
+            filtered_products = self.all_products
+        else:
+            filtered_products = []
+            for product in self.all_products:
+                # On suppose que chaque produit possède un attribut "category" (objet avec .name)
+                cat = getattr(product, "category", None)
+                cat_name = cat.name if cat and hasattr(cat, "name") else "N/A"
+                if cat_name == selected_category:
+                    filtered_products.append(product)
+        self.display_products(filtered_products)
 
     def on_item_select(self, event):
         item_id = self.tree.focus()
@@ -178,7 +239,16 @@ class StockWindow:
             self.tree.item(item, tags=("hover",))
 
     def show_add_dialog(self):
-        AddProductDialog(self.parent, self.controller, self.load_data)
+        # Empêche d'ouvrir plusieurs fenêtres "Add" en même temps
+        if self._add_dialog_open:
+            return
+        self._add_dialog_open = True
+        dialog = AddProductDialog(self.parent, self.controller, self.load_data)
+        # Lorsqu'on ferme la fenêtre "Add", le flag est réinitialisé
+        dialog.bind("<Destroy>", self.reset_add_flag)
+
+    def reset_add_flag(self, event=None):
+        self._add_dialog_open = False
 
     def show_edit_dialog(self, product):
         UpdateProductDialog(
@@ -231,13 +301,18 @@ class StockWindow:
         self.view_image_button.config(state=tk.DISABLED)
 
     def load_data(self):
-        # Effacer les anciennes données
+        # Efface les anciennes données
         for item in self.tree.get_children():
             self.tree.delete(item)
         self.products.clear()
         self.images.clear()
 
         products = self.controller.get_all_products()
+        self.all_products = products  # stocke tous les produits pour le filtrage
+        self.display_products(products)
+
+    def display_products(self, products):
+        # Remplit le treeview avec la liste fournie
         for product in products:
             product_image_path = product.photo
             image_for_table = None
@@ -250,6 +325,7 @@ class StockWindow:
                 except Exception as e:
                     print(f"Error loading image for product {product.id}: {e}")
 
+            # Formatage de la date de création
             created_at = product.created_at
             if created_at:
                 if isinstance(created_at, (datetime.datetime, datetime.date)):
@@ -259,9 +335,14 @@ class StockWindow:
             else:
                 created_at = "N/A"
 
+            # Récupère le nom de la catégorie (on suppose que le produit possède l'attribut 'category')
+            cat = getattr(product, "category", None)
+            category_name = cat.name if cat and hasattr(cat, "name") else "N/A"
+
             item = self.tree.insert("", "end")
             self.tree.set(item, "ID", str(product.id))
             self.tree.set(item, "Name", str(product.name))
+            self.tree.set(item, "Category", category_name)
             self.tree.set(item, "Quantity", str(product.quantity))
             self.tree.set(item, "Price", str(product.price))
             self.tree.set(item, "Created At", created_at)
@@ -271,12 +352,13 @@ class StockWindow:
                 "name": product.name,
                 "quantity": product.quantity,
                 "price": product.price,
-                "image": product_image_path,
+                "image": product.photo,
                 "created_at": product.created_at,
+                "category": cat,
             }
 
     def show_image_dialog(self):
-        if StockWindow._image_dialog_open:  # Vérifie si un dialogue est déjà ouvert
+        if StockWindow._image_dialog_open:
             return
         if self.selected_item_id:
             product_data = self.products.get(self.selected_item_id)
@@ -291,21 +373,17 @@ class StockWindow:
 class ImageViewDialog(Toplevel):
     def __init__(self, parent, product_data):
         super().__init__(parent)
-        self.withdraw()  # Masquer la fenêtre pendant la configuration
+        self.withdraw()  # Masquer pendant la configuration
         self.title(f"Image Viewer - Product ID: {product_data['id']}")
         self.product_data = product_data
-        self.protocol(
-            "WM_DELETE_WINDOW", self.close_dialog
-        )  # Gestion de la fermeture du dialogue
+        self.protocol("WM_DELETE_WINDOW", self.close_dialog)
         self.setup_ui()
-        self.center_window()  # Centrer la fenêtre sur l'écran
-        self.deiconify()  # Réafficher la fenêtre une fois centrée
+        self.center_window()  # Centrer sur l'écran
+        self.deiconify()  # Réafficher
 
     def setup_ui(self):
         container = tk.Frame(self, padx=20, pady=20)
         container.pack(fill="both", expand=True)
-
-        # Affichage de l'image
         image_path = self.product_data.get("image")
         image_display = None
         if image_path:
@@ -326,29 +404,24 @@ class ImageViewDialog(Toplevel):
 
         details_frame = tk.Frame(container)
         details_frame.pack(fill="x")
-
-        # Affichage des détails du produit (layout en grille)
         tk.Label(details_frame, text="ID:", font=("Helvetica", 10, "bold")).grid(
             row=0, column=0, sticky="e", padx=5, pady=2
         )
         tk.Label(details_frame, text=str(self.product_data["id"])).grid(
             row=0, column=1, sticky="w", padx=5, pady=2
         )
-
         tk.Label(details_frame, text="Name:", font=("Helvetica", 10, "bold")).grid(
             row=1, column=0, sticky="e", padx=5, pady=2
         )
         tk.Label(details_frame, text=self.product_data["name"]).grid(
             row=1, column=1, sticky="w", padx=5, pady=2
         )
-
         tk.Label(details_frame, text="Quantity:", font=("Helvetica", 10, "bold")).grid(
             row=2, column=0, sticky="e", padx=5, pady=2
         )
         tk.Label(details_frame, text=str(self.product_data["quantity"])).grid(
             row=2, column=1, sticky="w", padx=5, pady=2
         )
-
         tk.Label(details_frame, text="Price:", font=("Helvetica", 10, "bold")).grid(
             row=3, column=0, sticky="e", padx=5, pady=2
         )
@@ -363,7 +436,6 @@ class ImageViewDialog(Toplevel):
             created_at_str = "N/A"
         else:
             created_at_str = str(created_at_str)
-
         tk.Label(
             details_frame, text="Created At:", font=("Helvetica", 10, "bold")
         ).grid(row=4, column=0, sticky="e", padx=5, pady=2)
@@ -372,30 +444,43 @@ class ImageViewDialog(Toplevel):
         )
 
     def close_dialog(self):
-        StockWindow._image_dialog_open = (
-            False  # Réinitialise le flag quand le dialogue est fermé
-        )
+        StockWindow._image_dialog_open = False
         self.destroy()
 
     def center_window(self):
-        """Centrer la fenêtre sur l'écran."""
-        self.update_idletasks()  # Met à jour l'affichage pour calculer la taille correcte
+        self.update_idletasks()
         width = self.winfo_reqwidth()
         height = self.winfo_reqheight()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
-        self.geometry(f"+{x}+{y}")  # Définit la position de la fenêtre
+        self.geometry(f"+{x}+{y}")
 
 
+# ----- Code de test (Mock) -----
 if __name__ == "__main__":
-    # Mock ProductController et autres dépendances pour test standalone
+    # Classes mock pour tester en standalone
+    class MockCategory:
+        def __init__(self, name):
+            self.name = name
+
+    class MockProduct:
+        def __init__(self, id, name, quantity, price, photo, created_at, category=None):
+            self.id = id
+            self.name = name
+            self.quantity = quantity
+            self.price = price
+            self.photo = photo
+            self.created_at = created_at
+            self.category = category
+
     class MockProductController:
         def get_all_products(self):
-            # Retourne une liste de produits mock pour le test
             products = []
+            categories = [MockCategory("Electronics"), MockCategory("Books")]
             for i in range(5):
+                cat = categories[i % 2]
                 products.append(
                     MockProduct(
                         id=i + 1,
@@ -404,6 +489,7 @@ if __name__ == "__main__":
                         price=25.99 * (i + 1),
                         photo=("path/to/your/image.png" if i % 2 == 0 else None),
                         created_at=datetime.datetime.now() - datetime.timedelta(days=i),
+                        category=cat,
                     )
                 )
             return products
@@ -414,18 +500,21 @@ if __name__ == "__main__":
         def update_product(self, updated_product):
             print(f"Mock update product {updated_product}")
 
-    class MockProduct:
-        def __init__(self, id, name, quantity, price, photo, created_at):
-            self.id = id
-            self.name = name
-            self.quantity = quantity
-            self.price = price
-            self.photo = photo
-            self.created_at = created_at
+    class MockAddProductDialog(tk.Toplevel):
+        def __init__(self, parent, controller, on_add):
+            super().__init__(parent)
+            self.controller = controller
+            self.on_add = on_add
+            self.title("Add Product")
+            self.geometry("500x630")
+            self.resizable(False, False)
+            self.transient(parent)
+            self.after(100, lambda: self.grab_set())
+            self.protocol("WM_DELETE_WINDOW", self.on_dialog_close)
+            tk.Label(self, text="Mock Add Product Dialog").pack(pady=20)
 
-    class MockAddProductDialog:
-        def __init__(self, parent, controller, load_data_callback):
-            print("Mock AddProductDialog created")
+        def on_dialog_close(self):
+            self.destroy()
 
     class MockUpdateProductDialog:
         def __init__(self, parent, product, on_update, on_delete):
