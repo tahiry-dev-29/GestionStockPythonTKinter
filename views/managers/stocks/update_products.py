@@ -39,7 +39,7 @@ class UpdateProductDialog:
         if "image" in self.product_data and self.product_data["image"]:
             try:
                 img = Image.open(self.product_data["image"])
-                img.thumbnail((150, 150))
+                img = img.resize((150, 150), Image.LANCZOS)  # 🔹 Taille fixe
                 self.image = ImageTk.PhotoImage(img)
                 image_label = tk.Label(container, image=self.image, bg="#f5f5f5")
                 image_label.pack(pady=(0, 20))
@@ -57,14 +57,28 @@ class UpdateProductDialog:
         form = tk.Frame(parent, bg="#f5f5f5")
         form.pack(fill="x", pady=10)
 
+        # Champ Product Name
         self.create_field(form, "Product Name:", self.name_var)
-        self.create_field(form, "Quantity:", self.quantity_var)
-        self.create_field(form, "Price:", self.price_var)
+
+        # 🔹 Frame pour regrouper Quantity & Price sur une seule ligne
+        row_frame = tk.Frame(form, bg="#f5f5f5")
+        row_frame.pack(fill="x", pady=10)
+
+        self.create_field(
+            row_frame, "Quantity:", self.quantity_var, side="left", expand=True
+        )
+        self.create_field(
+            row_frame, "Price:", self.price_var, side="right", expand=True
+        )
+
         self.create_buttons(form)
 
-    def create_field(self, parent, label, variable):
+    def create_field(self, parent, label, variable, side=None, expand=False):
         frame = tk.Frame(parent, bg="#f5f5f5")
-        frame.pack(fill="x", pady=10)
+        if side:
+            frame.pack(side=side, expand=expand, fill="x", padx=5)
+        else:
+            frame.pack(fill="x", pady=10)
 
         tk.Label(
             frame, text=label, font=("Helvetica", 12), bg="#f5f5f5", fg="#333333"
@@ -158,7 +172,6 @@ class UpdateProductDialog:
                 self.on_delete()
                 self.dialog.destroy()
             except Exception as e:
-                # Même en cas d'exception, si le produit est supprimé, on affiche le message de succès
                 messagebox.showinfo("Success", "Product deleted successfully!")
                 self.dialog.destroy()
 

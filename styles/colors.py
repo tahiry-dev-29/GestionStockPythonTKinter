@@ -42,7 +42,7 @@ BUTTON_STYLE = {
     "pady": 5,
     "cursor": "hand2",
     "activebackground": ACTIVE_COLOR,
-    "activeforeground": "white"
+    "activeforeground": "white",
 }
 
 # Label styles
@@ -58,15 +58,11 @@ ENTRY_STYLE = {
     "bg": INPUT_BG,
     "fg": TEXT_COLOR,
     "relief": "flat",
-    "bd": 0
+    "bd": 0,
 }
 
 # Card styles
-CARD_STYLE = {
-    "bg": CARD_BG,
-    "relief": "solid",
-    "bd": 1
-}
+CARD_STYLE = {"bg": CARD_BG, "relief": "solid", "bd": 1}
 
 # Table styles
 TABLE_STYLE = {
@@ -74,7 +70,7 @@ TABLE_STYLE = {
     "fieldbackground": SURFACE_COLOR,
     "foreground": TEXT_COLOR,
     "font": ("Helvetica", 10),
-    "rowheight": 40
+    "rowheight": 40,
 }
 
 # Action button styles
@@ -98,5 +94,3 @@ DELETE_BUTTON_STYLE = {
     "bg": "#ff4444",
     "fg": "white",
 }
-
-

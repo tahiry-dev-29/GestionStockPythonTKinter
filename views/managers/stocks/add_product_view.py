@@ -3,6 +3,8 @@ from tkinter import ttk, messagebox, filedialog
 from styles.colors import *
 from styles.theme import Theme
 import os
+import hashlib  # Pour hasher le nom de l'image
+from PIL import Image  # Pour traiter l'image et la sauvegarder proprement
 from controllers.category_controller import CategoryController
 from models.product import Product
 
@@ -24,15 +26,15 @@ class AddProductDialog(tk.Toplevel):
         self.after(100, lambda: self.grab_set())
         self.protocol("WM_DELETE_WINDOW", self.on_dialog_close)
 
-        self.setup_ui()  # Ajout d'une fonction setup_ui pour organiser le code
+        self.setup_ui()  # Organisation de l'interface
 
-    def setup_ui(self):  # Fonction pour organiser l'interface utilisateur
+    def setup_ui(self):
         container = tk.Frame(self, bg="#f5f5f5", padx=30, pady=30)
         container.pack(fill="both", expand=True)
 
-        self.create_title_label(container)  # Fonction pour le titre
-        self.create_form(container)  # Fonction pour le formulaire
-        self.create_buttons(container)  # Fonction pour les boutons
+        self.create_title_label(container)
+        self.create_form(container)
+        self.create_buttons(container)
 
     def create_title_label(self, parent):
         tk.Label(
@@ -46,30 +48,21 @@ class AddProductDialog(tk.Toplevel):
     def create_form(self, parent):
         form_frame = tk.Frame(parent, bg="#f5f5f5")
         form_frame.pack(fill="x", pady=10)
+        self.create_form_fields(form_frame)
 
-        self.create_form_fields(form_frame)  # Fonction pour les champs du formulaire
-
-    def create_form_fields(self, parent):  # Regroupement des champs du formulaire
-        # Name field
+    def create_form_fields(self, parent):
+        # Champ "Nom du produit"
         self.create_field(parent, "Product Name:", "name_entry")
-
-        # Price field
+        # Champ "Prix"
         self.create_field(parent, "Price:", "price_entry")
-
-        # Quantity field
+        # Champ "Quantité"
         self.create_field(parent, "Quantity:", "quantity_entry")
+        # Champ "Photo" avec bouton Browse
+        self.create_photo_field(parent)
+        # Champ "Catégorie"
+        self.create_category_field(parent)
 
-        # Photo field
-        self.create_photo_field(parent)  # Fonction spécifique pour le champ photo
-
-        # Category field
-        self.create_category_field(
-            parent
-        )  # Fonction spécifique pour le champ categorie
-
-    def create_field(
-        self, parent, label_text, entry_name
-    ):  # Fonction générique pour créer un champ label/entry
+    def create_field(self, parent, label_text, entry_name):
         label = tk.Label(
             parent,
             text=label_text,
@@ -82,29 +75,25 @@ class AddProductDialog(tk.Toplevel):
             parent, font=("Helvetica", 11), bg="white", relief="solid", bd=1
         )
         entry.pack(fill="x", ipady=8, pady=(0, 10))
-        setattr(
-            self, entry_name, entry
-        )  # Permet d'accéder à l'entry via self.entry_name
+        setattr(self, entry_name, entry)  # Permet d'accéder via self.name_entry, etc.
 
-    def create_photo_field(
-        self, parent
-    ):  # Fonction spécifique pour le champ photo avec bouton browse
+    def create_photo_field(self, parent):
         photo_label = tk.Label(
-            parent, text="Photo:", font=("Helvetica", 12), bg="#f5f5f5", fg="#333333"
+            parent,
+            text="Photo:",
+            font=("Helvetica", 12),
+            bg="#f5f5f5",
+            fg="#333333",
         )
         photo_label.pack(anchor="w", pady=(0, 5))
 
-        photo_frame = tk.Frame(
-            parent, bg="#f5f5f5"
-        )  # Frame pour grouper Entry et Button
+        photo_frame = tk.Frame(parent, bg="#f5f5f5")
         photo_frame.pack(fill="x", pady=(0, 10))
 
         self.photo_entry = tk.Entry(
             photo_frame, font=("Helvetica", 11), bg="white", relief="solid", bd=1
         )
-        self.photo_entry.pack(
-            side="left", fill="x", ipady=8, expand=True
-        )  # Entry prend l'espace disponible
+        self.photo_entry.pack(side="left", fill="x", ipady=8, expand=True)
 
         photo_button = tk.Button(
             photo_frame,
@@ -117,16 +106,11 @@ class AddProductDialog(tk.Toplevel):
             pady=10,
             relief="flat",
         )
-        photo_button.pack(
-            side="left", padx=(10, 0)
-        )  # Bouton à droite de l'entry avec un peu d'espace
-
+        photo_button.pack(side="left", padx=(10, 0))
         photo_button.bind("<Enter>", lambda e, b=photo_button: self.on_hover(b, True))
         photo_button.bind("<Leave>", lambda e, b=photo_button: self.on_hover(b, False))
 
-    def create_category_field(
-        self, parent
-    ):  # Fonction spécifique pour le champ catégorie (Combobox)
+    def create_category_field(self, parent):
         category_label = tk.Label(
             parent,
             text="Category:",
@@ -147,11 +131,9 @@ class AddProductDialog(tk.Toplevel):
         self.category_combobox["values"] = [category.name for category in categories]
         self.category_combobox.pack(fill="x", ipady=8, pady=(0, 15))
 
-    def create_buttons(self, parent):  # Fonction pour créer les boutons Save et Cancel
+    def create_buttons(self, parent):
         button_frame = tk.Frame(parent, bg="#f5f5f5")
-        button_frame.pack(
-            fill="x", pady=(20, 0), anchor="s", side="bottom"
-        )  #  Ancrage en bas et side bottom pour s'assurer qu'ils sont visibles
+        button_frame.pack(fill="x", pady=(20, 0), anchor="s", side="bottom")
 
         cancel_button = tk.Button(
             button_frame,
@@ -184,7 +166,7 @@ class AddProductDialog(tk.Toplevel):
             btn.bind("<Leave>", lambda e, b=btn: self.on_hover(b, False))
 
     def on_hover(self, button, hovering):
-        if button["text"] == "Cancel" or button["text"] == "Browse":
+        if button["text"] in ["Cancel", "Browse"]:
             button["bg"] = "#d0d0d0" if hovering else "#e0e0e0"
         elif button["text"] == "Save":
             button["bg"] = "#45a049" if hovering else "#4CAF50"
@@ -212,14 +194,21 @@ class AddProductDialog(tk.Toplevel):
             os.makedirs("uploads")
 
         if photo:
-            filename = os.path.basename(photo)
-            destination = os.path.join("uploads", filename)
             try:
-                with open(photo, "rb") as source, open(destination, "wb") as dest:
-                    dest.write(source.read())
+                # Ouvrir l'image pour valider son contenu et la réenregistrer
+                img = Image.open(photo)
+                ext = os.path.splitext(photo)[1].lower()
+                filename = os.path.basename(photo)
+                # Hasher le nom de base pour obtenir un nom unique
+                hashed_name = hashlib.sha256(filename.encode()).hexdigest() + ext
+                destination = os.path.join("uploads", hashed_name)
+                # Sauvegarde via PIL pour garantir un format correct
+                img.save(destination)
                 photo = destination
             except Exception as e:
-                messagebox.showerror("Error", f"Error saving photo: {e}", parent=self)
+                messagebox.showerror(
+                    "Error", f"Error processing photo: {e}", parent=self
+                )
                 return
 
         if not name or not price or not quantity or not category_name:
@@ -244,6 +233,7 @@ class AddProductDialog(tk.Toplevel):
             )
             return
 
+        # La date de création sera automatiquement gérée par la base (DEFAULT CURRENT_TIMESTAMP)
         product = Product(
             name=name,
             price=price,

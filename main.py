@@ -3,6 +3,7 @@ from views import DashboardWindow, LoginWindow, RegisterWindow
 from database.db_manager import DBManager
 from styles.colors import BG_COLOR
 
+
 class StockManagementApp:
     def __init__(self):
         self.root = Tk()
@@ -14,7 +15,7 @@ class StockManagementApp:
     def setup_main_window(self):
         self.root.title("Stock Management System")
         self.root.configure(bg=BG_COLOR)
-        self.center_window(1100, 650)
+        self.center_window(1300, 650)
         self.root.update_idletasks()
 
     def center_window(self, width, height):
@@ -27,7 +28,7 @@ class StockManagementApp:
     def show_register(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = None 
+        self.current_window = None
         self.current_window = RegisterWindow(self.root, self.show_login)
 
     def show_login(self):
@@ -38,7 +39,7 @@ class StockManagementApp:
 
     def show_dashboard(self, register=False):
         """
-        Callback pour la navigation. Si register=True, 
+        Callback pour la navigation. Si register=True,
         on navigue vers register au lieu du dashboard
         """
         if register:
@@ -50,6 +51,7 @@ class StockManagementApp:
 
     def run(self):
         self.root.mainloop()
+
 
 if __name__ == "__main__":
     app = StockManagementApp()
