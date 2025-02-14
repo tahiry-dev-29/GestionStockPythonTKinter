@@ -1,0 +1,22 @@
+from .colors import TEXT_COLOR
+
+FONT_FAMILY = "Helvetica"
+
+TITLE_FONT = (FONT_FAMILY, 24, "bold")
+SUBTITLE_FONT = (FONT_FAMILY, 14, "bold")
+HEADER_FONT = (FONT_FAMILY, 16, "bold")
+NORMAL_FONT = (FONT_FAMILY, 12)
+SMALL_FONT = (
+    FONT_FAMILY,
+    10,
+)
+BUTTON_FONT = (
+    FONT_FAMILY,
+    12,
+    "bold",
+)
+TABLE_HEADER_FONT = (FONT_FAMILY, 10, "bold")
+TABLE_CELL_FONT = (FONT_FAMILY, 10)
+
+ITALIC_FONT = (FONT_FAMILY, 12, "italic")
+LARGE_BOLD_FONT = (FONT_FAMILY, 18, "bold")

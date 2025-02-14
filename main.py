@@ -1,7 +1,12 @@
 from tkinter import *
-from views import DashboardWindow, LoginWindow, RegisterWindow
+from views import (
+    DashboardWindow,
+    LoginWindow,
+    RegisterWindow,
+)
 from database.db_manager import DBManager
 from styles.colors import BG_COLOR
+from models.user_manager import UserManager
 
 
 class StockManagementApp:
@@ -10,6 +15,8 @@ class StockManagementApp:
         self.setup_main_window()
         self.current_window = None
         self.db_manager = DBManager()
+        self.user_manager = UserManager()
+        self.logged_in_user = None
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_login()
 
@@ -34,15 +41,26 @@ class StockManagementApp:
     def show_login(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = LoginWindow(self.root, self.show_dashboard)
+        self.current_window = LoginWindow(self.root, self.show_dashboard_after_login)
 
-    def show_dashboard(self, register=False):
-        if register:
-            self.show_register()
+    def show_dashboard_after_login(self, email):
+        self.show_dashboard(email=email)
+
+    def show_dashboard(self, email=None):
+        if self.current_window:
+            self.current_window.destroy()
+
+        if email:
+            user = self.user_manager.get_user_by_email(email)
+            if user:
+                self.logged_in_user = user
+                self.current_window = DashboardWindow(
+                    self.root, self.show_login, self.logged_in_user
+                )
+            else:
+                self.show_login()
         else:
-            if self.current_window:
-                self.current_window.destroy()
-            self.current_window = DashboardWindow(self.root, self.show_login)
+            self.show_login()
 
     def on_closing(self):
         self.root.destroy()

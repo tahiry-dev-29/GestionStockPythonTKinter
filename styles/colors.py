@@ -20,10 +20,11 @@ SUCCESS_COLOR = "#4CAF50"  # Green
 WARNING_COLOR = "#FF9800"  # Orange
 DANGER_COLOR = "#F44336"  # Red
 INFO_COLOR = "#03A9F4"  # Light Blue
+ERROR_COLOR = "#F44336"
 
 # Interactive colors
-HOVER_COLOR = "#1565C0"  # Darker blue for hover
-ACTIVE_COLOR = "#0D47A1"  # Even darker blue for click/active state
+HOVER_COLOR = "#1565C0"
+ACTIVE_COLOR = "#0D47A1"
 
 # Font configurations
 TITLE_FONT = ("Helvetica", 24, "bold")

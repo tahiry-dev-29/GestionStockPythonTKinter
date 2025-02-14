@@ -88,7 +88,7 @@ class LoginWindow:
             if self.db_manager.verify_user_by_email(email, password):
                 messagebox.showinfo("Success", "Login Successful")
                 self.frame.destroy()
-                self.show_dashboard_callback()
+                self.show_dashboard_callback(email)  # Pass the email here
             else:
                 messagebox.showerror("Error", "Invalid Email or Password")
         except Exception as e:

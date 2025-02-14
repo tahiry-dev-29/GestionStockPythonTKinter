@@ -49,20 +49,20 @@ class CategoriesView(tk.Frame):
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
 
         # Define column headings
-        self.tree.heading("id", text="ID")
-        self.tree.heading("name", text="Name")
-        self.tree.heading("description", text="Description")
-        self.tree.heading("created_at", text="Created At")
-        self.tree.heading("edit", text="Edit")
-        self.tree.heading("delete", text="Delete")
+        self.tree.heading("id", text="ID", anchor="center")
+        self.tree.heading("name", text="Name", anchor="center")
+        self.tree.heading("description", text="Description", anchor="center")
+        self.tree.heading("created_at", text="Created At", anchor="center")
+        self.tree.heading("edit", text="Edit", anchor="center")
+        self.tree.heading("delete", text="Delete", anchor="center")
 
-        # Column widths
-        self.tree.column("id", width=50)
-        self.tree.column("name", width=150)
-        self.tree.column("description", width=250)
-        self.tree.column("created_at", width=150)
-        self.tree.column("edit", width=50)
-        self.tree.column("delete", width=50)
+        # Column widths and anchor to center the text
+        self.tree.column("id", width=50, anchor="center")
+        self.tree.column("name", width=150, anchor="center")
+        self.tree.column("description", width=250, anchor="center")
+        self.tree.column("created_at", width=150, anchor="center")
+        self.tree.column("edit", width=50, anchor="center")
+        self.tree.column("delete", width=50, anchor="center")
 
         # Add scrollbar
         scrollbar = ttk.Scrollbar(

@@ -1,19 +1,17 @@
 import tkinter as tk
-from tkinter import ttk
 from styles.colors import *
 from views.managers.users.users_view import UsersView
 
 
 class DashboardWindow:
-    def __init__(self, root, show_login_callback):
+    def __init__(self, root, show_login_callback, logged_in_user):
         self.root = root
         self.show_login_callback = show_login_callback
+        self.logged_in_user = logged_in_user
 
-        # Main container
         self.frame = tk.Frame(self.root, bg=BG_COLOR)
         self.frame.pack(fill="both", expand=True)
 
-        # Initialize content frame before creating layout
         self.content_frame = None
         self.current_view = None
 
@@ -75,7 +73,6 @@ class DashboardWindow:
         )
         btn.pack(fill="x", pady=2)
 
-        # Hover effects
         btn.bind("<Enter>", lambda e: btn.configure(bg=HOVER_COLOR))
         btn.bind("<Leave>", lambda e: btn.configure(bg=PRIMARY_COLOR))
 
@@ -102,11 +99,17 @@ class DashboardWindow:
 
     def show_default_view(self):
         self.clear_content()
+        if self.logged_in_user:
+            welcome_text = f"Welcome, {self.logged_in_user['username']} ({self.logged_in_user['role']})"
+        else:
+            welcome_text = "Welcome to Dashboard (User not found)"
+
         tk.Label(
             self.content_frame,
-            text="Welcome to Dashboard",
+            text=welcome_text,
             font=TITLE_FONT,
             bg=BG_COLOR,
+            fg=TEXT_COLOR,
         ).pack(pady=20)
 
     def show_products(self):

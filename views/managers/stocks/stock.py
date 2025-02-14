@@ -219,12 +219,11 @@ class StockWindow:
         if selected_category == "All":
             filtered_products = self.all_products
         else:
-            filtered_products = []
-            for product in self.all_products:
-                cat = getattr(product, "category", None)
-                cat_name = cat.name if cat and hasattr(cat, "name") else "N/A"
-                if cat_name == selected_category:
-                    filtered_products.append(product)
+            filtered_products = [
+                product
+                for product in self.all_products
+                if product.category and product.category.name == selected_category
+            ]
         self.display_products(filtered_products)
 
     def on_item_select(self, event):
@@ -333,6 +332,11 @@ class StockWindow:
         self.display_products(products)
 
     def display_products(self, products):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        self.products.clear()
+        self.images.clear()
+
         for product in products:
             product_image_path = product.photo
             image_for_table = None
