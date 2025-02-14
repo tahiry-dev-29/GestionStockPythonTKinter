@@ -19,11 +19,10 @@ class Product:
         self.quantity = quantity
         self.photo = photo
         self.category_id = category_id
-        self.created_at = created_at  # Date de création du produit
+        self.created_at = created_at
         self.db = DbConnection()
 
     def __str__(self):
-        # Affichage du nom, de la quantité, du prix et de la date de création
         return f"{self.name} (Qté: {self.quantity}, Prix: {self.price}€, Créé le: {self.created_at})"
 
     def to_dict(self):
@@ -41,7 +40,7 @@ class Product:
     def from_db_row(row):
         if row is None:
             return None
-        # On s'attend à ce que row contienne 7 colonnes : id, name, price, quantity, photo, category_id, created_at
+
         return Product(
             id=row[0],
             name=row[1],
@@ -49,7 +48,7 @@ class Product:
             quantity=row[3],
             photo=row[4],
             category_id=row[5],
-            created_at=row[6],  # Date de création récupérée depuis la BDD
+            created_at=row[6],
         )
 
     @staticmethod

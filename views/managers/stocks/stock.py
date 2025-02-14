@@ -1,5 +1,3 @@
-# views/managers/stocks/stock.py
-# stock_window.py
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, Label
 from PIL import Image, ImageTk
@@ -11,13 +9,11 @@ from controllers.product_controller import ProductController
 from .update_products import UpdateProductDialog
 from controllers.category_controller import (
     CategoryController,
-)  # pour récupérer les catégories
-from models.product import Product  # Importez le modèle Product ici
-from models.category import Category  # Assurez vous d'importer Category également
+)
 
 
 class StockWindow:
-    _image_dialog_open = False  # Flag pour la fenêtre d'image
+    _image_dialog_open = False
 
     def __init__(self, parent):
         self.parent = parent
@@ -26,16 +22,14 @@ class StockWindow:
         self.frame.pack(fill="both", expand=True)
 
         self.controller = ProductController()
-        self.products = (
-            {}
-        )  # Dictionary to store displayed products (key = treeview item id) - MAINTENANT STOCKE DES OBJETS PRODUCT
-        self.all_products = []  # Full product list (for filtering)
+        self.products = {}
+        self.all_products = []
         self.images = {}
         self.selected_item_id = None
         self.edit_button = None
         self.delete_button = None
         self.view_image_button = None
-        self._add_dialog_open = False  # Flag to prevent multiple "Add" windows
+        self._add_dialog_open = False
 
         self.setup_ui()
 
@@ -69,7 +63,7 @@ class StockWindow:
 
         self.edit_button = tk.Button(
             actions_frame,
-            text="✏️ Edit Product",
+            text="📝 Edit Product",
             command=self.edit_selected_product,
             state=tk.DISABLED,
             **BUTTON_STYLE,
@@ -115,8 +109,6 @@ class StockWindow:
         table_frame.pack(fill="both", expand=True)
 
         self.setup_treeview_style()
-
-        # On ajoute une colonne "Category" en plus
         self.tree = ttk.Treeview(
             table_frame,
             columns=("ID", "Name", "Category", "Quantity", "Price", "Created At"),
@@ -171,7 +163,6 @@ class StockWindow:
         )
 
     def setup_category_list(self):
-        # Crée une section affichant une Combobox pour filtrer par catégorie (comme dans le "Add")
         category_frame = tk.Frame(self.frame, bg=BG_COLOR)
         category_frame.pack(fill="x", padx=20, pady=5)
         tk.Label(
@@ -238,12 +229,10 @@ class StockWindow:
             self.tree.item(item, tags=("hover",))
 
     def show_add_dialog(self):
-        # Empêche d'ouvrir plusieurs fenêtres "Add" en même temps
         if self._add_dialog_open:
             return
         self._add_dialog_open = True
         dialog = AddProductDialog(self.parent, self.controller, self.load_data)
-        # Lorsqu'on ferme la fenêtre "Add", le flag est réinitialisé
         dialog.bind("<Destroy>", self.reset_add_flag)
 
     def reset_add_flag(self, event=None):
@@ -264,27 +253,17 @@ class StockWindow:
 
     def edit_selected_product(self):
         if self.selected_item_id:
-            product_object = self.products.get(
-                self.selected_item_id
-            )  # Récupérez l'objet Product directement depuis self.products
-            if product_object:  # Vérifiez que product_object n'est pas None
-                self.show_edit_dialog(
-                    product_object
-                )  # Passez l'objet Product à show_edit_dialog
+            product_object = self.products.get(self.selected_item_id)
+            if product_object:
+                self.show_edit_dialog(product_object)
 
     def delete_selected_product(self):
         if self.selected_item_id:
-            product_object = self.products.get(
-                self.selected_item_id
-            )  # Récupérez l'objet Product
+            product_object = self.products.get(self.selected_item_id)
             if product_object:
-                self.handle_delete(
-                    product_object
-                )  # Passez l'objet Product à handle_delete
+                self.handle_delete(product_object)
 
-    # stock.py (méthode handle_update corrigée)
-
-    def handle_update(self, updated_data):  # updated_data is a dictionary
+    def handle_update(self, updated_data):
         try:
             product_id = updated_data["id"]
             product = self.controller.get_product_by_id(product_id)  # Fetch product
@@ -294,29 +273,23 @@ class StockWindow:
                 product.quantity = updated_data["quantity"]
                 product.price = updated_data["price"]
                 product.photo = updated_data["photo"]
-                product.category_id = updated_data[
-                    "category_id"
-                ]  # Directly update in the Product object
+                product.category_id = updated_data["category_id"]
 
-                self.controller.update_product(
-                    product
-                )  # Pass the updated product to the controller for the update query.
+                self.controller.update_product(product)
 
                 messagebox.showinfo("Success", "Product updated successfully!")
-                self.load_data()  # Reload after successful update
+                self.load_data()
             else:
                 messagebox.showerror("Error", "Product not found.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update product: {e}")
 
-    def handle_delete(self, product):  # Accepte un objet Product
+    def handle_delete(self, product):
         try:
             if messagebox.askyesno(
                 "Confirm Delete", "Are you sure you want to delete this product?"
             ):
-                self.controller.delete_product(
-                    product.id
-                )  # Accédez directement à product.id car c'est un objet Product
+                self.controller.delete_product(product.id)
                 messagebox.showinfo("Success", "Product deleted successfully!")
                 self.load_data()
                 self.selected_item_id = None
@@ -334,14 +307,13 @@ class StockWindow:
         self.view_image_button.config(state=tk.DISABLED)
 
     def load_data(self):
-        # Efface les anciennes données
         for item in self.tree.get_children():
             self.tree.delete(item)
         self.products.clear()
         self.images.clear()
 
         products = self.controller.get_all_products()
-        self.all_products = products  # stocke tous les produits pour le filtrage
+        self.all_products = products
         self.display_products(products)
 
     def display_products(self, products):
@@ -362,7 +334,6 @@ class StockWindow:
                 except Exception as e:
                     print(f"Error loading image for product {product.id}: {e}")
 
-            # Formatage de la date de création
             created_at = product.created_at
             if created_at:
                 created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
@@ -379,7 +350,7 @@ class StockWindow:
                 product.price,
                 created_at,
             )
-            item = self.tree.insert("", "end", values=values)  # Use values here
+            item = self.tree.insert("", "end", values=values)
 
             self.products[item] = product
 
@@ -387,36 +358,30 @@ class StockWindow:
         if StockWindow._image_dialog_open:
             return
         if self.selected_item_id:
-            product_data = self.products.get(
-                self.selected_item_id
-            )  # `product_data` est maintenant un objet Product
+            product_data = self.products.get(self.selected_item_id)
             if product_data:
                 StockWindow._image_dialog_open = True
-                ImageViewDialog(
-                    self.parent, product_data
-                )  # Passez l'objet Product à ImageViewDialog
+                ImageViewDialog(self.parent, product_data)
 
     def destroy(self):
         self.frame.destroy()
 
 
 class ImageViewDialog(Toplevel):
-    def __init__(self, parent, product_data):  # Accepte un objet Product maintenant
+    def __init__(self, parent, product_data):
         super().__init__(parent)
-        self.withdraw()  # Masquer pendant la configuration
-        self.title(
-            f"Image Viewer - Product ID: {product_data.id}"
-        )  # Accédez à product_data.id
-        self.product_data = product_data  # Stockez l'objet Product
+        self.withdraw()
+        self.title(f"Image Viewer - Product ID: {product_data.id}")
+        self.product_data = product_data
         self.protocol("WM_DELETE_WINDOW", self.close_dialog)
         self.setup_ui()
-        self.center_window()  # Centrer sur l'écran
-        self.deiconify()  # Réafficher
+        self.center_window()
+        self.deiconify()
 
     def setup_ui(self):
         container = tk.Frame(self, padx=20, pady=20)
         container.pack(fill="both", expand=True)
-        image_path = self.product_data.photo  # Accédez à product_data.photo
+        image_path = self.product_data.photo
         image_display = None
         if image_path:
             try:
@@ -501,72 +466,72 @@ class ImageViewDialog(Toplevel):
 
 
 # ----- Code de test (Mock) -----
-if __name__ == "__main__":
-    # Classes mock pour tester en standalone
-    class MockCategory:
-        def __init__(self, name):
-            self.name = name
+# if __name__ == "__main__":
 
-    class MockProduct:
-        def __init__(self, id, name, quantity, price, photo, created_at, category=None):
-            self.id = id
-            self.name = name
-            self.quantity = quantity
-            self.price = price
-            self.photo = photo
-            self.created_at = created_at
-            self.category = category
+#     class MockCategory:
+#         def __init__(self, name):
+#             self.name = name
 
-    class MockProductController:
-        def get_all_products(self):
-            products = []
-            categories = [MockCategory("Electronics"), MockCategory("Books")]
-            for i in range(5):
-                cat = categories[i % 2]
-                products.append(
-                    MockProduct(
-                        id=i + 1,
-                        name=f"Product {i+1}",
-                        quantity=10 * (i + 1),
-                        price=25.99 * (i + 1),
-                        photo=("path/to/your/image.png" if i % 2 == 0 else None),
-                        created_at=datetime.datetime.now() - datetime.timedelta(days=i),
-                        category=cat,
-                    )
-                )
-            return products
+#     class MockProduct:
+#         def __init__(self, id, name, quantity, price, photo, created_at, category=None):
+#             self.id = id
+#             self.name = name
+#             self.quantity = quantity
+#             self.price = price
+#             self.photo = photo
+#             self.created_at = created_at
+#             self.category = category
 
-        def delete_product(self, product_id):
-            print(f"Mock delete product {product_id}")
+#     class MockProductController:
+#         def get_all_products(self):
+#             products = []
+#             categories = [MockCategory("Electronics"), MockCategory("Books")]
+#             for i in range(5):
+#                 cat = categories[i % 2]
+#                 products.append(
+#                     MockProduct(
+#                         id=i + 1,
+#                         name=f"Product {i+1}",
+#                         quantity=10 * (i + 1),
+#                         price=25.99 * (i + 1),
+#                         photo=("path/to/your/image.png" if i % 2 == 0 else None),
+#                         created_at=datetime.datetime.now() - datetime.timedelta(days=i),
+#                         category=cat,
+#                     )
+#                 )
+#             return products
 
-        def update_product(self, updated_product):
-            print(f"Mock update product {updated_product}")
+#         def delete_product(self, product_id):
+#             print(f"Mock delete product {product_id}")
 
-    class MockAddProductDialog(tk.Toplevel):
-        def __init__(self, parent, controller, on_add):
-            super().__init__(parent)
-            self.controller = controller
-            self.on_add = on_add
-            self.title("Add Product")
-            self.geometry("500x630")
-            self.resizable(False, False)
-            self.transient(parent)
-            self.after(100, lambda: self.grab_set())
-            self.protocol("WM_DELETE_WINDOW", self.on_dialog_close)
-            tk.Label(self, text="Mock Add Product Dialog").pack(pady=20)
+#         def update_product(self, updated_product):
+#             print(f"Mock update product {updated_product}")
 
-        def on_dialog_close(self):
-            self.destroy()
+#     class MockAddProductDialog(tk.Toplevel):
+#         def __init__(self, parent, controller, on_add):
+#             super().__init__(parent)
+#             self.controller = controller
+#             self.on_add = on_add
+#             self.title("Add Product")
+#             self.geometry("500x630")
+#             self.resizable(False, False)
+#             self.transient(parent)
+#             self.after(100, lambda: self.grab_set())
+#             self.protocol("WM_DELETE_WINDOW", self.on_dialog_close)
+#             tk.Label(self, text="Mock Add Product Dialog").pack(pady=20)
 
-    class MockUpdateProductDialog:
-        def __init__(self, parent, product, on_update, on_delete):
-            print(f"Mock UpdateProductDialog created for product {product}")
+#         def on_dialog_close(self):
+#             self.destroy()
 
-    ProductController = MockProductController
-    AddProductDialog = MockAddProductDialog
-    UpdateProductDialog = MockUpdateProductDialog
+#     class MockUpdateProductDialog:
+#         def __init__(self, parent, product, on_update, on_delete):
+#             print(f"Mock UpdateProductDialog created for product {product}")
 
-    root = tk.Tk()
-    root.title("Stock Management Mock Test")
-    stock_window = StockWindow(root)
-    root.mainloop()
+#     ProductController = MockProductController
+#     AddProductDialog = MockAddProductDialog
+#     UpdateProductDialog = MockUpdateProductDialog
+
+#     root = tk.Tk()
+#     root.title("Stock Management Mock Test")
+#     stock_window = StockWindow(root)
+#     root.mainloop()

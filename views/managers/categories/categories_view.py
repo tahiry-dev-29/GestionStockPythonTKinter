@@ -5,35 +5,36 @@ from controllers.category_controller import CategoryController
 from styles.theme import *
 from .update_categ_view import UpdateCategoryDialog
 
+
 class CategoriesView(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, **FRAME_STYLE)
-        self.pack(fill='both', expand=True)
+        self.pack(fill="both", expand=True)
         self.controller = CategoryController()
-        self.current_dialog = None  # Track active dialog
-        
+        self.current_dialog = None
+
         # Header
         self.header_frame = tk.Frame(self, bg=BG_COLOR)
-        self.header_frame.pack(fill='x', pady=20, padx=20)
-        
+        self.header_frame.pack(fill="x", pady=20, padx=20)
+
         tk.Label(
             self.header_frame,
             text="Categories Management",
             font=TITLE_FONT,
-            bg=BG_COLOR
-        ).pack(side='left')
-        
+            bg=BG_COLOR,
+        ).pack(side="left")
+
         # Add Category Button
         tk.Button(
             self.header_frame,
             text="+ Add Category",
             command=self.show_add_category_dialog,
-            **BUTTON_STYLE
-        ).pack(side='right')
-        
+            **BUTTON_STYLE,
+        ).pack(side="right")
+
         # Categories Table
         self.create_categories_table()
-        
+
         # Load categories
         self.setup_tree_events()
         self.load_categories()
@@ -41,36 +42,38 @@ class CategoriesView(tk.Frame):
     def create_categories_table(self):
         # Table Frame
         table_frame = tk.Frame(self, **FRAME_STYLE)
-        table_frame.pack(fill='both', expand=True, padx=20, pady=20)
-        
+        table_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
         # Create Treeview with added created_at column
-        columns = ('id', 'name', 'description', 'created_at', 'edit', 'delete')
-        self.tree = ttk.Treeview(table_frame, columns=columns, show='headings')
-        
+        columns = ("id", "name", "description", "created_at", "edit", "delete")
+        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
+
         # Define column headings
-        self.tree.heading('id', text='ID')
-        self.tree.heading('name', text='Name')
-        self.tree.heading('description', text='Description')
-        self.tree.heading('created_at', text='Created At')
-        self.tree.heading('edit', text='Edit')
-        self.tree.heading('delete', text='Delete')
-        
+        self.tree.heading("id", text="ID")
+        self.tree.heading("name", text="Name")
+        self.tree.heading("description", text="Description")
+        self.tree.heading("created_at", text="Created At")
+        self.tree.heading("edit", text="Edit")
+        self.tree.heading("delete", text="Delete")
+
         # Column widths
-        self.tree.column('id', width=50)
-        self.tree.column('name', width=150)
-        self.tree.column('description', width=250)
-        self.tree.column('created_at', width=150)  # Added width for created_at
-        self.tree.column('edit', width=50)
-        self.tree.column('delete', width=50)
-        
+        self.tree.column("id", width=50)
+        self.tree.column("name", width=150)
+        self.tree.column("description", width=250)
+        self.tree.column("created_at", width=150)
+        self.tree.column("edit", width=50)
+        self.tree.column("delete", width=50)
+
         # Add scrollbar
-        scrollbar = ttk.Scrollbar(table_frame, orient='vertical', command=self.tree.yview)
+        scrollbar = ttk.Scrollbar(
+            table_frame, orient="vertical", command=self.tree.yview
+        )
         self.tree.configure(yscrollcommand=scrollbar.set)
-        
+
         # Pack the treeview and scrollbar
-        self.tree.pack(side='left', fill='both', expand=True)
-        scrollbar.pack(side='right', fill='y')
-        
+        self.tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
         # Style the tree
         style = ttk.Style()
         style.configure(
@@ -81,7 +84,7 @@ class CategoriesView(tk.Frame):
             rowheight=40,
             font=TEXT_FONT,
             borderwidth=0,
-            relief="flat"
+            relief="flat",
         )
         style.configure(
             "Treeview.Heading",
@@ -90,47 +93,56 @@ class CategoriesView(tk.Frame):
             font=SUBTITLE_FONT,
             relief="flat",
             borderwidth=0,
-            padding=10
+            padding=10,
         )
         style.map(
             "Treeview",
             background=[("selected", SECONDARY_COLOR)],
             foreground=[("selected", "white")],
-            relief=[("selected", "flat")]
+            relief=[("selected", "flat")],
         )
-        
+
         # Add alternating row colors
-        self.tree.tag_configure('oddrow', background='#f5f5f5')
-        self.tree.tag_configure('evenrow', background=SURFACE_COLOR)
+        self.tree.tag_configure("oddrow", background="#f5f5f5")
+        self.tree.tag_configure("evenrow", background=SURFACE_COLOR)
 
     def load_categories(self):
         # Clear existing items
         for item in self.tree.get_children():
             self.tree.delete(item)
-        
+
         # Load categories from database using the controller
         categories = self.controller.get_all_categories()
         for i, category in enumerate(categories):
             # Format the date for display
-            created_at = category.created_at.strftime('%Y-%m-%d %H:%M') if category.created_at else ''
-            
+            created_at = (
+                category.created_at.strftime("%Y-%m-%d %H:%M")
+                if category.created_at
+                else ""
+            )
+
             # Add row with alternating colors
-            tag = 'evenrow' if i % 2 == 0 else 'oddrow'
-            
-            self.tree.insert('', 'end', values=(
-                category.id,
-                category.name,
-                category.description,
-                created_at,  # Add created_at to display
-                "📝 Edit",
-                "🗑️ Delete"
-            ), tags=(tag,))
+            tag = "evenrow" if i % 2 == 0 else "oddrow"
+
+            self.tree.insert(
+                "",
+                "end",
+                values=(
+                    category.id,
+                    category.name,
+                    category.description,
+                    created_at,
+                    "📝 Edit",
+                    "🗑️ Delete",
+                ),
+                tags=(tag,),
+            )
 
     def show_add_category_dialog(self):
         self.show_dialog_safely(self._create_add_dialog)
 
     def setup_tree_events(self):
-        self.tree.bind('<ButtonRelease-1>', self.on_tree_click)
+        self.tree.bind("<ButtonRelease-1>", self.on_tree_click)
 
     def on_tree_click(self, event):
         region = self.tree.identify_region(event.x, event.y)
@@ -142,41 +154,41 @@ class CategoriesView(tk.Frame):
             return
 
         column = self.tree.identify_column(event.x)
-        values = self.tree.item(item)['values']
+        values = self.tree.item(item)["values"]
 
-        if column == '#5':  # Updated index for Edit column
+        if column == "#5":
             self.show_edit_dialog(values[0], values[1], values[2])
-        elif column == '#6':  # Updated index for Delete column
+        elif column == "#6":
             self.confirm_delete(values[0])
 
     def show_dialog_safely(self, dialog_func, *args):
         if self.current_dialog is not None:
             self.current_dialog.destroy()
-        
+
         dialog = tk.Toplevel(self)
         self.current_dialog = dialog
-        
+
         # Configure dialog
         dialog.transient(self)
         dialog.geometry("400x300")
         dialog.resizable(False, False)
-        
+
         def on_dialog_close():
             self.current_dialog = None
             dialog.destroy()
-            
+
         dialog.protocol("WM_DELETE_WINDOW", on_dialog_close)
-        
+
         # Center dialog
         self.center_dialog(dialog)
-        
+
         # Make modal
         dialog.grab_set()
         dialog.focus_set()
-        
+
         # Create dialog content
         dialog_func(dialog, *args)
-        
+
         return dialog
 
     def center_dialog(self, dialog):
@@ -185,10 +197,12 @@ class CategoriesView(tk.Frame):
         height = dialog.winfo_height()
         x = (dialog.winfo_screenwidth() // 2) - (width // 2)
         y = (dialog.winfo_screenheight() // 2) - (height // 2)
-        dialog.geometry(f'{width}x{height}+{x}+{y}')
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
 
     def show_edit_dialog(self, category_id, name, description):
-        UpdateCategoryDialog(self, category_id, name, description, self.controller, self.load_categories)
+        UpdateCategoryDialog(
+            self, category_id, name, description, self.controller, self.load_categories
+        )
 
     def confirm_delete(self, category_id):
         self.show_dialog_safely(self._create_delete_dialog, category_id)
@@ -196,29 +210,31 @@ class CategoriesView(tk.Frame):
     def _create_add_dialog(self, dialog):
         dialog.configure(**DIALOG_STYLE)
         dialog.title("Add Category")
-        
+
         # Form fields with styled entries
         name_label = tk.Label(dialog, text="Name:", font=SUBTITLE_FONT, bg=BG_COLOR)
         name_label.pack(pady=(0, 5), anchor="w")
-        
+
         name_entry = tk.Entry(dialog, **ENTRY_STYLE)
         name_entry.pack(fill="x", pady=(0, 15))
-        
-        desc_label = tk.Label(dialog, text="Description:", font=SUBTITLE_FONT, bg=BG_COLOR)
+
+        desc_label = tk.Label(
+            dialog, text="Description:", font=SUBTITLE_FONT, bg=BG_COLOR
+        )
         desc_label.pack(pady=(0, 5), anchor="w")
-        
+
         desc_entry = tk.Text(dialog, height=5, **ENTRY_STYLE)
         desc_entry.pack(fill="both", expand=True, pady=(0, 20))
-        
+
         # Button area
         button_frame = tk.Frame(dialog, bg=BG_COLOR)
         button_frame.pack(fill="x", pady=(20, 0))
-        
+
         save_button = tk.Button(
             button_frame,
             text="Save",
             command=lambda: self.save_category(dialog, name_entry, desc_entry),
-            **BUTTON_STYLE
+            **BUTTON_STYLE,
         )
         save_button.pack(side="right")
 
@@ -227,21 +243,17 @@ class CategoriesView(tk.Frame):
         dialog.configure(bg=BG_COLOR)
         dialog.title("Confirmer la suppression")
         dialog.geometry("350x200")
-        
+
         # Container principal
         container = tk.Frame(dialog, bg=BG_COLOR, padx=20, pady=10)
-        container.pack(fill='both', expand=True)
-        
+        container.pack(fill="both", expand=True)
+
         # Icône d'avertissement
         icon_label = tk.Label(
-            container,
-            text="⚠️",
-            font=(FONT_FAMILY, 48),
-            bg=BG_COLOR,
-            fg=WARNING_COLOR
+            container, text="⚠️", font=(FONT_FAMILY, 48), bg=BG_COLOR, fg=WARNING_COLOR
         )
         icon_label.pack(pady=(0, 10))
-        
+
         # Message d'avertissement
         message = tk.Label(
             container,
@@ -249,14 +261,14 @@ class CategoriesView(tk.Frame):
             font=SUBTITLE_FONT,
             bg=BG_COLOR,
             fg=TEXT_PRIMARY,
-            justify='center'
+            justify="center",
         )
         message.pack(pady=(0, 20))
-        
+
         # Conteneur pour les boutons
         button_container = tk.Frame(container, bg=BG_COLOR)
-        button_container.pack(fill='x', pady=(0, 10))
-        
+        button_container.pack(fill="x", pady=(0, 10))
+
         # Fonction de suppression
         def confirm_delete():
             if self.controller.delete_category(category_id):
@@ -264,8 +276,10 @@ class CategoriesView(tk.Frame):
                 dialog.destroy()
                 messagebox.showinfo("Succès", "Catégorie supprimée avec succès")
             else:
-                messagebox.showerror("Erreur", "Impossible de supprimer la catégorie", parent=dialog)
-        
+                messagebox.showerror(
+                    "Erreur", "Impossible de supprimer la catégorie", parent=dialog
+                )
+
         # Boutons
         cancel_btn = tk.Button(
             button_container,
@@ -277,10 +291,10 @@ class CategoriesView(tk.Frame):
             padx=20,
             pady=5,
             relief="flat",
-            cursor="hand2"
+            cursor="hand2",
         )
-        cancel_btn.pack(side='left', padx=5, expand=True)
-        
+        cancel_btn.pack(side="left", padx=5, expand=True)
+
         confirm_btn = tk.Button(
             button_container,
             text="Supprimer",
@@ -291,11 +305,10 @@ class CategoriesView(tk.Frame):
             padx=20,
             pady=5,
             relief="flat",
-            cursor="hand2"
+            cursor="hand2",
         )
-        confirm_btn.pack(side='right', padx=5, expand=True)
-        
-        # Centrer le dialogue
+        confirm_btn.pack(side="right", padx=5, expand=True)
+
         self.center_dialog(dialog)
 
     def _handle_delete(self, dialog, category_id):
@@ -310,11 +323,11 @@ class CategoriesView(tk.Frame):
     def save_category(self, dialog, name_entry, desc_entry):
         name = name_entry.get().strip()
         description = desc_entry.get("1.0", tk.END).strip()
-        
+
         if not name:
             messagebox.showwarning("Warning", "Name is required!", parent=dialog)
             return
-            
+
         if self.controller.create_category(name, description):
             self.load_categories()
             self.current_dialog = None
@@ -326,7 +339,7 @@ class CategoriesView(tk.Frame):
     # Remove unused methods
     def set_dialog_modal(self, dialog):
         pass
-        
+
     def close_dialog(self, dialog):
         if dialog == self.current_dialog:
             self.current_dialog = None

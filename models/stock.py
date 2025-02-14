@@ -1,7 +1,7 @@
 from database.db_config import DbConnection
 
-# Classe pour gérer les mouvements de stock
 
+# Classe pour gérer les mouvements de stock
 class Stock:
     def __init__(self):
         self.db = DbConnection()
@@ -17,11 +17,11 @@ class Stock:
                   FROM stock_movements sm 
                   JOIN products p ON sm.product_id = p.id"""
         params = None
-        
+
         if product_id:
             query += " WHERE product_id = %s"
             params = (product_id,)
-            
+
         query += " ORDER BY movement_date DESC"
         return self.db.fetch_all(query, params)
 
@@ -35,4 +35,4 @@ class Stock:
                   FROM stock_movements 
                   WHERE product_id = %s"""
         result = self.db.fetch_one(query, (product_id,))
-        return result['current_stock'] if result['current_stock'] else 0
+        return result["current_stock"] if result["current_stock"] else 0

@@ -1,1 +1,0 @@
-# Gestion centralisée des erreurs

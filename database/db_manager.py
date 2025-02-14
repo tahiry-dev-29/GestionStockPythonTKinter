@@ -43,7 +43,6 @@ class DBManager:
 
     def create_tables_if_not_exist(self):
         try:
-            # IMPORTANT : Créer d'abord les tables référencées (categories) pour éviter les problèmes de clés étrangères.
             if not self.table_exists("categories"):
                 self.cursor.execute(
                     """
@@ -132,7 +131,6 @@ class DBManager:
 
     def get_users(self):
         try:
-            # Ajout de la colonne created_at pour afficher la date de création
             self.cursor.execute("SELECT id, username, email, created_at FROM users")
             return self.cursor.fetchall()
         except Error as e:
@@ -194,7 +192,7 @@ class DBManager:
                 LEFT JOIN categories c ON p.category_id = c.id
             """
             self.cursor.execute(query)
-            return self.cursor.fetchall()  # returns a list of dict
+            return self.cursor.fetchall()
         except Error as e:
             logging.error(f"❌ Erreur lors de la récupération des produits: {e}")
             raise
@@ -234,7 +232,6 @@ class DBManager:
 
     def verify_user(self, username, password):
         try:
-            # Hachage du mot de passe avant vérification
             hashed_password = self.hash_password(password)
             query = """SELECT * FROM users 
                        WHERE username = %s AND password = %s"""
@@ -247,7 +244,7 @@ class DBManager:
 
     def verify_user_by_email(self, email, password):
         try:
-            self.connect()  # Ensure connection is active
+            self.connect()
             hashed_password = self.hash_password(password)
             query = "SELECT * FROM users WHERE email = %s AND password = %s"
             self.cursor.execute(query, (email, hashed_password))
@@ -258,7 +255,7 @@ class DBManager:
 
     def create_user(self, username, email, password, role="user"):
         try:
-            self.connect()  # Ensure connection is active
+            self.connect()
             hashed_password = self.hash_password(password)
             query = """INSERT INTO users (username, email, password, role) 
                        VALUES (%s, %s, %s, %s)"""

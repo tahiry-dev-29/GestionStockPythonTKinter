@@ -1,4 +1,3 @@
-# Logique métier pour les produits
 from database.db_manager import DBManager
 from models.category import Category
 from models.product import Product
@@ -29,10 +28,8 @@ class ProductController:
                 category_id=prod["category_id"],
                 created_at=prod["created_at"],
             )
-            if product:  # Check if the product was created successfully
-                product.category = Category(
-                    name=prod.get("category_name")
-                )  # Correct attribute name
+            if product:
+                product.category = Category(name=prod.get("category_name"))
                 products.append(product)
         return products
 

@@ -1,20 +1,15 @@
-# views/managers/stocks/update_products.py
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from PIL import Image, ImageTk
 from controllers.category_controller import CategoryController
-from styles.colors import *  # Importez vos styles de couleurs si utilisés (optionnel)
+from styles.colors import *
 from styles.theme import (
     Theme,
-)  # Importez vos définitions de thème si utilisés (optionnel)
-from models.category import Category  # Assurez-vous d'importer votre modèle Category
-from models.product import Product  # Assurez-vous d'importer votre modèle Product
+)
 
 
 class UpdateProductDialog:
-    def __init__(
-        self, parent, product, on_update, on_delete
-    ):  # Accepte un objet Product
+    def __init__(self, parent, product, on_update, on_delete):
         self.dialog = tk.Toplevel(parent)
         self.dialog.title("Update Product")
         self.theme = Theme.get_dialog_style()
@@ -25,19 +20,15 @@ class UpdateProductDialog:
         self.dialog.update_idletasks()
         self.dialog.grab_set()
 
-        self.product = product  # Stocke l'objet Product
+        self.product = product
         self.on_update = on_update
         self.on_delete = on_delete
         self.image = None
         self.image_label = None
-        self.image_path = (
-            self.product.photo if self.product.photo else None
-        )  # Utilise product.photo
+        self.image_path = self.product.photo if self.product.photo else None
 
         self.category_controller = CategoryController()
-        self.categories = (
-            self.category_controller.get_all_categories()
-        )  # Récupère toutes les catégories ici
+        self.categories = self.category_controller.get_all_categories()
 
         self.setup_ui()
 
@@ -76,35 +67,26 @@ class UpdateProductDialog:
 
             if self.image_label:
                 self.image_label.configure(image=img_tk)
-                self.image_label.image = img_tk  # Garder une référence
+                self.image_label.image = img_tk
             else:
                 self.image_label = tk.Label(self.container, image=img_tk, bg="#f5f5f5")
                 self.image_label.pack(pady=(0, 20))
-                self.image_label.image = img_tk  # Garder une référence
-
-            self.image = img_tk  # Stocker l'image pour éviter le garbage collection
+                self.image_label.image = img_tk
+            self.image = img_tk
         except Exception as e:
             messagebox.showerror("Error", f"Erreur d'affichage de l'image: {e}")
 
     def create_form(self, parent):
-        self.form_frame = tk.Frame(
-            parent, bg="#f5f5f5"
-        )  # Frame pour organiser le formulaire
+        self.form_frame = tk.Frame(parent, bg="#f5f5f5")
         self.form_frame.pack(fill="x", pady=10)
 
-        self.name_var = tk.StringVar(value=self.product.name)  # Utilise product.name
-        self.quantity_var = tk.StringVar(
-            value=str(self.product.quantity)
-        )  # Utilise product.quantity
-        self.price_var = tk.StringVar(
-            value=str(self.product.price)
-        )  # Utilise product.price
+        self.name_var = tk.StringVar(value=self.product.name)
+        self.quantity_var = tk.StringVar(value=str(self.product.quantity))
+        self.price_var = tk.StringVar(value=str(self.product.price))
 
-        # Product Name & Category on the same row
         row_frame_name_category = tk.Frame(self.form_frame, bg="#f5f5f5")
         row_frame_name_category.pack(fill="x", pady=10)
 
-        # Nom du produit
         self.create_field(
             row_frame_name_category,
             "Product Name:",
@@ -114,11 +96,8 @@ class UpdateProductDialog:
         )
 
         # Catégorie en dropdown
-        self.create_category_field(
-            row_frame_name_category, side="right", expand=True
-        )  # Utilise create_category_field ici
+        self.create_category_field(row_frame_name_category, side="right", expand=True)
 
-        # Prix & Quantité sur la même ligne
         row_frame = tk.Frame(self.form_frame, bg="#f5f5f5")
         row_frame.pack(fill="x", pady=10)
 
@@ -129,7 +108,6 @@ class UpdateProductDialog:
             row_frame, "Price:", self.price_var, side="right", expand=True
         )
 
-        # Bouton pour choisir une image
         browse_btn = tk.Button(
             self.form_frame,
             text="Browse Image",
@@ -145,9 +123,7 @@ class UpdateProductDialog:
 
         self.create_buttons(self.form_frame)
 
-    def create_category_field(
-        self, parent, side=None, expand=False
-    ):  # Nom de méthode conservé
+    def create_category_field(self, parent, side=None, expand=False):
         frame = tk.Frame(parent, bg="#f5f5f5")
         if side:
             frame.pack(side=side, expand=expand, fill="x", padx=5)
@@ -162,22 +138,19 @@ class UpdateProductDialog:
             fg="#333333",
         ).pack(anchor="w")
 
-        category_names = [
-            category.name for category in self.categories
-        ]  # Extraction des noms ici
-        # Définir la valeur par défaut sur la catégorie actuelle du produit (si elle existe)
+        category_names = [category.name for category in self.categories]
         current_category_name = (
             self.product.category.name
             if hasattr(self.product, "category") and self.product.category
             else ""
-        )  # Accès à product.category.name, vérification hasattr
+        )
 
         self.category_var = tk.StringVar(value=current_category_name)
         self.category_combobox = ttk.Combobox(
             frame,
             textvariable=self.category_var,
             font=("Helvetica", 11),
-            values=category_names,  # Utilisation des noms de catégories
+            values=category_names,
         )
         self.category_combobox.pack(fill="x", ipady=8, pady=(0, 5))
 
@@ -249,61 +222,47 @@ class UpdateProductDialog:
                 None,
             )
             if not selected_category:
-                messagebox.showerror(
-                    "Error", "Catégorie invalide sélectionnée."
-                )  # Message en français
+                messagebox.showerror("Error", "Catégorie invalide sélectionnée.")
                 return
 
-            updated_data = {  # Utilisez updated_data pour correspondre à votre on_update original, ou changez pour un objet Product si votre on_update le gère
-                "id": self.product.id,  # Ajoutez l'id si votre on_update a besoin de l'id du produit
+            updated_data = {
+                "id": self.product.id,
                 "name": self.name_var.get().strip(),
                 "quantity": int(self.quantity_var.get().strip()),
                 "price": float(self.price_var.get().strip()),
-                "category_id": selected_category.id,  # Utilisez category_id et non category
-                "photo": self.image_path,  # Utilisez 'photo'
+                "category_id": selected_category.id,
+                "photo": self.image_path,
             }
-            self.on_update(updated_data)  # Passe updated_data à on_update
+            self.on_update(updated_data)
             self.dialog.destroy()
-            messagebox.showinfo(
-                "Succès", "Produit mis à jour avec succès !"
-            )  # Message en français
+            messagebox.showinfo("Succès", "Produit mis à jour avec succès !")
 
     def delete_product(self):
         if messagebox.askyesno(
             "Confirmation",
-            "Êtes-vous sûr de vouloir supprimer ce produit ?",  # Message en français
+            "Êtes-vous sûr de vouloir supprimer ce produit ?",
         ):
-            self.on_delete(self.product.id)  # Passez l'ID du produit à on_delete
+            self.on_delete(self.product.id)
             self.dialog.destroy()
 
     def validate_form(self):
         if not self.name_var.get().strip():
-            messagebox.showerror(
-                "Erreur", "Le nom du produit est obligatoire"
-            )  # Message en français
+            messagebox.showerror("Erreur", "Le nom du produit est obligatoire")
             return False
         if not self.quantity_var.get().strip():
-            messagebox.showerror(
-                "Erreur", "La quantité est obligatoire"
-            )  # Message en français
+            messagebox.showerror("Erreur", "La quantité est obligatoire")
             return False
         if not self.price_var.get().strip():
-            messagebox.showerror(
-                "Erreur", "Le prix est obligatoire"
-            )  # Message en français
+            messagebox.showerror("Erreur", "Le prix est obligatoire")
             return False
         try:
             int(self.quantity_var.get().strip())
         except ValueError:
-            messagebox.showerror(
-                "Erreur", "La quantité doit être un entier"
-            )  # Message en français
+            messagebox.showerror("Erreur", "La quantité doit être un entier")
             return False
         try:
             float(self.price_var.get().strip())
         except ValueError:
-            messagebox.showerror(
-                "Erreur", "Le prix doit être un nombre"
-            )  # Message en français
+            messagebox.showerror("Erreur", "Le prix doit être un nombre")
             return False
         return True

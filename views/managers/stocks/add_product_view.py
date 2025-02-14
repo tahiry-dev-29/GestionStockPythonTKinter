@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-from PIL import Image, ImageTk  # On utilise Image.LANCZOS pour le redimensionnement
+from PIL import Image, ImageTk
 
 from controllers.category_controller import CategoryController
 from models.product import Product
@@ -176,15 +176,13 @@ class AddProductDialog(tk.Toplevel):
         """
         try:
             img = Image.open(image_path)
-            fixed_height = 150  # 🖼️ Hauteur fixe pour l'aperçu
+            fixed_height = 150
             img_width, img_height = img.size
 
-            # Calcul du ratio pour conserver le ratio original
             ratio = fixed_height / img_height
             new_height = fixed_height
             new_width = int(img_width * ratio)
 
-            # Redimensionnement de l'image pour que la hauteur soit toujours de 150px
             img = img.resize((new_width, new_height), resample=Image.LANCZOS)
 
             img_tk = ImageTk.PhotoImage(img)
