@@ -10,6 +10,8 @@ class StockManagementApp:
         self.setup_main_window()
         self.current_window = None
         self.db_manager = DBManager()
+        # Set the protocol to handle the window closing properly
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_login()
 
     def setup_main_window(self):
@@ -28,20 +30,14 @@ class StockManagementApp:
     def show_register(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = None
         self.current_window = RegisterWindow(self.root, self.show_login)
 
     def show_login(self):
         if self.current_window:
             self.current_window.destroy()
-        self.current_window = None
         self.current_window = LoginWindow(self.root, self.show_dashboard)
 
     def show_dashboard(self, register=False):
-        """
-        Callback pour la navigation. Si register=True,
-        on navigue vers register au lieu du dashboard
-        """
         if register:
             self.show_register()
         else:
@@ -49,8 +45,14 @@ class StockManagementApp:
                 self.current_window.destroy()
             self.current_window = DashboardWindow(self.root, self.show_login)
 
+    def on_closing(self):
+        self.root.destroy()
+
     def run(self):
-        self.root.mainloop()
+        try:
+            self.root.mainloop()
+        except KeyboardInterrupt:
+            self.root.destroy()
 
 
 if __name__ == "__main__":

@@ -38,7 +38,6 @@ class StockWindow:
         header = tk.Frame(self.frame, bg=BG_COLOR)
         header.pack(fill="x", padx=20, pady=10)
 
-        # Titre (prend toute la largeur)
         title_frame = tk.Frame(header, bg=BG_COLOR)
         title_frame.pack(fill="x", pady=10)
         tk.Label(
@@ -109,6 +108,7 @@ class StockWindow:
         table_frame.pack(fill="both", expand=True)
 
         self.setup_treeview_style()
+
         self.tree = ttk.Treeview(
             table_frame,
             columns=("ID", "Name", "Category", "Quantity", "Price", "Created At"),
@@ -184,6 +184,7 @@ class StockWindow:
             category_frame,
             textvariable=self.category_filter_var,
             font=("Helvetica", 11),
+            style="FilterCombobox.TCombobox",
         )
         self.category_filter_combobox["values"] = ["All"] + category_names
         self.category_filter_combobox.current(0)
@@ -196,16 +197,34 @@ class StockWindow:
         )
         filter_button.pack(side="left", padx=5)
 
+        # --- Beautiful Style for Combobox ---
+        style = ttk.Style(self.parent)
+        style.configure(
+            "FilterCombobox.TCombobox",
+            background=SURFACE_COLOR,
+            foreground=TEXT_COLOR,
+            borderwidth=0,
+            relief="flat",
+            padding=(10, 8),
+            font=("Helvetica", 11),
+        )
+        style.map(
+            "FilterCombobox.TCombobox",
+            background=[("active", HOVER_COLOR), ("focus", ACCENT_COLOR)],
+            foreground=[("focus", TEXT_COLOR), ("active", TEXT_COLOR)],
+        )
+
     def filter_by_category(self):
         selected_category = self.category_filter_var.get()
         if selected_category == "All":
             filtered_products = self.all_products
         else:
-            filtered_products = [
-                product
-                for product in self.all_products
-                if product.category and product.category.name == selected_category
-            ]
+            filtered_products = []
+            for product in self.all_products:
+                cat = getattr(product, "category", None)
+                cat_name = cat.name if cat and hasattr(cat, "name") else "N/A"
+                if cat_name == selected_category:
+                    filtered_products.append(product)
         self.display_products(filtered_products)
 
     def on_item_select(self, event):
@@ -239,6 +258,7 @@ class StockWindow:
         self._add_dialog_open = False
 
     def show_edit_dialog(self, product_object):
+
         if product_object:
             UpdateProductDialog(
                 self.parent,
@@ -249,7 +269,9 @@ class StockWindow:
                 ),
             )
         else:
-            messagebox.showerror("Error", "Could not load product details for editing.")
+            messagebox.showerror(
+                "Error", "Impossible de charger les détails du produit pour l'édition."
+            )
 
     def edit_selected_product(self):
         if self.selected_item_id:
@@ -265,24 +287,18 @@ class StockWindow:
 
     def handle_update(self, updated_data):
         try:
-            product_id = updated_data["id"]
-            product = self.controller.get_product_by_id(product_id)  # Fetch product
-
-            if product:
-                product.name = updated_data["name"]
-                product.quantity = updated_data["quantity"]
-                product.price = updated_data["price"]
-                product.photo = updated_data["photo"]
-                product.category_id = updated_data["category_id"]
-
-                self.controller.update_product(product)
-
-                messagebox.showinfo("Success", "Product updated successfully!")
-                self.load_data()
-            else:
-                messagebox.showerror("Error", "Product not found.")
+            self.controller.update_product(
+                updated_data["id"],
+                updated_data["name"],
+                updated_data["price"],
+                updated_data["quantity"],
+                updated_data["photo"],
+                updated_data["category_id"],
+            )
+            messagebox.showinfo("Success", "Product updated successfully!")
+            self.load_data()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update product: {e}")
+            messagebox.showerror("Error", f"Failed to update product: {str(e)}")
 
     def handle_delete(self, product):
         try:
@@ -317,11 +333,6 @@ class StockWindow:
         self.display_products(products)
 
     def display_products(self, products):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        self.products.clear()
-        self.images.clear()
-
         for product in products:
             product_image_path = product.photo
             image_for_table = None
@@ -336,21 +347,23 @@ class StockWindow:
 
             created_at = product.created_at
             if created_at:
-                created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(created_at, (datetime.datetime, datetime.date)):
+                    created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    created_at = str(created_at)
             else:
                 created_at = "N/A"
 
-            category_name = product.category.name if product.category else "N/A"
+            cat = getattr(product, "category", None)
+            category_name = cat.name if cat and hasattr(cat, "name") else "N/A"
 
-            values = (
-                product.id,
-                product.name,
-                category_name,
-                product.quantity,
-                product.price,
-                created_at,
-            )
-            item = self.tree.insert("", "end", values=values)
+            item = self.tree.insert("", "end")
+            self.tree.set(item, "ID", str(product.id))
+            self.tree.set(item, "Name", str(product.name))
+            self.tree.set(item, "Category", category_name)
+            self.tree.set(item, "Quantity", str(product.quantity))
+            self.tree.set(item, "Price", str(product.price))
+            self.tree.set(item, "Created At", created_at)
 
             self.products[item] = product
 
@@ -404,39 +417,29 @@ class ImageViewDialog(Toplevel):
         tk.Label(details_frame, text="ID:", font=("Helvetica", 10, "bold")).grid(
             row=0, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(
-            details_frame, text=str(self.product_data.id)
-        ).grid(  # Accédez à product_data.id
+        tk.Label(details_frame, text=str(self.product_data.id)).grid(
             row=0, column=1, sticky="w", padx=5, pady=2
         )
         tk.Label(details_frame, text="Name:", font=("Helvetica", 10, "bold")).grid(
             row=1, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(
-            details_frame, text=self.product_data.name
-        ).grid(  # Accédez à product_data.name
+        tk.Label(details_frame, text=self.product_data.name).grid(
             row=1, column=1, sticky="w", padx=5, pady=2
         )
         tk.Label(details_frame, text="Quantity:", font=("Helvetica", 10, "bold")).grid(
             row=2, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(
-            details_frame, text=str(self.product_data.quantity)
-        ).grid(  # Accédez à product_data.quantity
+        tk.Label(details_frame, text=str(self.product_data.quantity)).grid(
             row=2, column=1, sticky="w", padx=5, pady=2
         )
         tk.Label(details_frame, text="Price:", font=("Helvetica", 10, "bold")).grid(
             row=3, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(
-            details_frame, text=str(self.product_data.price)
-        ).grid(  # Accédez à product_data.price
+        tk.Label(details_frame, text=str(self.product_data.price)).grid(
             row=3, column=1, sticky="w", padx=5, pady=2
         )
 
-        created_at_str = (
-            self.product_data.created_at
-        )  # Accédez à product_data.created_at
+        created_at_str = self.product_data.created_at
         if isinstance(created_at_str, (datetime.datetime, datetime.date)):
             created_at_str = created_at_str.strftime("%Y-%m-%d %H:%M:%S")
         elif created_at_str is None:
@@ -504,8 +507,8 @@ class ImageViewDialog(Toplevel):
 #         def delete_product(self, product_id):
 #             print(f"Mock delete product {product_id}")
 
-#         def update_product(self, updated_product):
-#             print(f"Mock update product {updated_product}")
+#         def update_product(self, *args):
+#             print(f"Mock update product with args: {args}")
 
 #     class MockAddProductDialog(tk.Toplevel):
 #         def __init__(self, parent, controller, on_add):

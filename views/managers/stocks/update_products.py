@@ -3,9 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 from PIL import Image, ImageTk
 from controllers.category_controller import CategoryController
 from styles.colors import *
-from styles.theme import (
-    Theme,
-)
+from styles.theme import Theme
 
 
 class UpdateProductDialog:
@@ -62,7 +60,6 @@ class UpdateProductDialog:
             ratio = fixed_height / img_height
             new_width = int(img_width * ratio)
             img = img.resize((new_width, fixed_height), Image.LANCZOS)
-
             img_tk = ImageTk.PhotoImage(img)
 
             if self.image_label:
@@ -72,9 +69,10 @@ class UpdateProductDialog:
                 self.image_label = tk.Label(self.container, image=img_tk, bg="#f5f5f5")
                 self.image_label.pack(pady=(0, 20))
                 self.image_label.image = img_tk
+
             self.image = img_tk
         except Exception as e:
-            messagebox.showerror("Error", f"Erreur d'affichage de l'image: {e}")
+            messagebox.showerror("Error", f"Error displaying image: {e}")
 
     def create_form(self, parent):
         self.form_frame = tk.Frame(parent, bg="#f5f5f5")
@@ -95,7 +93,6 @@ class UpdateProductDialog:
             expand=True,
         )
 
-        # Catégorie en dropdown
         self.create_category_field(row_frame_name_category, side="right", expand=True)
 
         row_frame = tk.Frame(self.form_frame, bg="#f5f5f5")
@@ -222,7 +219,7 @@ class UpdateProductDialog:
                 None,
             )
             if not selected_category:
-                messagebox.showerror("Error", "Catégorie invalide sélectionnée.")
+                messagebox.showerror("Error", "Invalid category selected.")
                 return
 
             updated_data = {
@@ -235,34 +232,33 @@ class UpdateProductDialog:
             }
             self.on_update(updated_data)
             self.dialog.destroy()
-            messagebox.showinfo("Succès", "Produit mis à jour avec succès !")
 
     def delete_product(self):
         if messagebox.askyesno(
             "Confirmation",
-            "Êtes-vous sûr de vouloir supprimer ce produit ?",
+            "Are you sure you want to delete this product?",
         ):
             self.on_delete(self.product.id)
             self.dialog.destroy()
 
     def validate_form(self):
         if not self.name_var.get().strip():
-            messagebox.showerror("Erreur", "Le nom du produit est obligatoire")
+            messagebox.showerror("Error", "Product name is required")
             return False
         if not self.quantity_var.get().strip():
-            messagebox.showerror("Erreur", "La quantité est obligatoire")
+            messagebox.showerror("Error", "Quantity is required")
             return False
         if not self.price_var.get().strip():
-            messagebox.showerror("Erreur", "Le prix est obligatoire")
+            messagebox.showerror("Error", "Price is required")
             return False
         try:
             int(self.quantity_var.get().strip())
         except ValueError:
-            messagebox.showerror("Erreur", "La quantité doit être un entier")
+            messagebox.showerror("Error", "Quantity must be an integer")
             return False
         try:
             float(self.price_var.get().strip())
         except ValueError:
-            messagebox.showerror("Erreur", "Le prix doit être un nombre")
+            messagebox.showerror("Error", "Price must be a number")
             return False
         return True
