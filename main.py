@@ -10,7 +10,6 @@ class StockManagementApp:
         self.setup_main_window()
         self.current_window = None
         self.db_manager = DBManager()
-        # Set the protocol to handle the window closing properly
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_login()
 

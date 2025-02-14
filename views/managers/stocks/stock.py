@@ -361,8 +361,8 @@ class StockWindow:
             self.tree.set(item, "ID", str(product.id))
             self.tree.set(item, "Name", str(product.name))
             self.tree.set(item, "Category", category_name)
-            self.tree.set(item, "Quantity", str(product.quantity))
-            self.tree.set(item, "Price", str(product.price))
+            self.tree.set(item, "Quantity", str(product.quantity) + " (n)")
+            self.tree.set(item, "Price", str(product.price) + " (Ar)")
             self.tree.set(item, "Created At", created_at)
 
             self.products[item] = product
