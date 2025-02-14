@@ -210,13 +210,11 @@ class StockWindow:
         if selected_category == "All":
             filtered_products = self.all_products
         else:
-            filtered_products = []
-            for product in self.all_products:
-                # On suppose que chaque produit possède un attribut "category" (objet avec .name)
-                cat = getattr(product, "category", None)
-                cat_name = cat.name if cat and hasattr(cat, "name") else "N/A"
-                if cat_name == selected_category:
-                    filtered_products.append(product)
+            filtered_products = [
+                product
+                for product in self.all_products
+                if product.category and product.category.name == selected_category
+            ]
         self.display_products(filtered_products)
 
     def on_item_select(self, event):
@@ -251,27 +249,18 @@ class StockWindow:
     def reset_add_flag(self, event=None):
         self._add_dialog_open = False
 
-    def show_edit_dialog(
-        self, product_object
-    ):  # `product_object` est maintenant un OBJET Product
-        # **CORRECTION IMPORTANTE : SUPPRESSION DE LA LIGNE INCORRECTE SUIVANTE:**
-        # product_object = Product.from_db_row(product) # LIGNE INCORRECTE À SUPPRIMER - NE PAS UTILISER CETTE LIGNE
-
-        if (
-            product_object
-        ):  # product_object est déjà vérifié comme potentiellement None dans edit_selected_product
+    def show_edit_dialog(self, product_object):
+        if product_object:
             UpdateProductDialog(
                 self.parent,
-                product_object,  # **Passez l'objet Product directement**
+                product_object,
                 on_update=self.handle_update,
                 on_delete=lambda product_to_delete=product_object: self.handle_delete(
                     product_to_delete
                 ),
             )
         else:
-            messagebox.showerror(
-                "Error", "Impossible de charger les détails du produit pour l'édition."
-            )
+            messagebox.showerror("Error", "Could not load product details for editing.")
 
     def edit_selected_product(self):
         if self.selected_item_id:
@@ -295,20 +284,30 @@ class StockWindow:
 
     # stock.py (méthode handle_update corrigée)
 
-    def handle_update(self, updated_data):
+    def handle_update(self, updated_data):  # updated_data is a dictionary
         try:
-            self.controller.update_product(
-                updated_data["id"],  # product_id
-                updated_data["name"],  # name
-                updated_data["price"],  # price
-                updated_data["quantity"],  # quantity
-                updated_data["photo"],  # photo
-                updated_data["category_id"],  # category_id
-            )
-            messagebox.showinfo("Success", "Product updated successfully!")
-            self.load_data()
+            product_id = updated_data["id"]
+            product = self.controller.get_product_by_id(product_id)  # Fetch product
+
+            if product:
+                product.name = updated_data["name"]
+                product.quantity = updated_data["quantity"]
+                product.price = updated_data["price"]
+                product.photo = updated_data["photo"]
+                product.category_id = updated_data[
+                    "category_id"
+                ]  # Directly update in the Product object
+
+                self.controller.update_product(
+                    product
+                )  # Pass the updated product to the controller for the update query.
+
+                messagebox.showinfo("Success", "Product updated successfully!")
+                self.load_data()  # Reload after successful update
+            else:
+                messagebox.showerror("Error", "Product not found.")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update product: {str(e)}")
+            messagebox.showerror("Error", f"Failed to update product: {e}")
 
     def handle_delete(self, product):  # Accepte un objet Product
         try:
@@ -346,7 +345,11 @@ class StockWindow:
         self.display_products(products)
 
     def display_products(self, products):
-        # Remplit le treeview avec la liste fournie
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        self.products.clear()
+        self.images.clear()
+
         for product in products:
             product_image_path = product.photo
             image_for_table = None
@@ -362,29 +365,23 @@ class StockWindow:
             # Formatage de la date de création
             created_at = product.created_at
             if created_at:
-                if isinstance(created_at, (datetime.datetime, datetime.date)):
-                    created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
-                else:
-                    created_at = str(created_at)
+                created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 created_at = "N/A"
 
-            # Récupère le nom de la catégorie (on suppose que le produit possède l'attribut 'category')
-            cat = getattr(product, "category", None)
-            category_name = cat.name if cat and hasattr(cat, "name") else "N/A"
+            category_name = product.category.name if product.category else "N/A"
 
-            item = self.tree.insert("", "end")
-            self.tree.set(item, "ID", str(product.id))
-            self.tree.set(item, "Name", str(product.name))
-            self.tree.set(item, "Category", category_name)
-            self.tree.set(item, "Quantity", str(product.quantity))
-            self.tree.set(item, "Price", str(product.price))
-            self.tree.set(item, "Created At", created_at)
-
-            # Stockez l'OBJET Product directement dans self.products (Correction importante)
-            self.products[item] = (
-                product  # Stocke l'objet Product ici, au lieu du dictionnaire comme avant
+            values = (
+                product.id,
+                product.name,
+                category_name,
+                product.quantity,
+                product.price,
+                created_at,
             )
+            item = self.tree.insert("", "end", values=values)  # Use values here
+
+            self.products[item] = product
 
     def show_image_dialog(self):
         if StockWindow._image_dialog_open:
