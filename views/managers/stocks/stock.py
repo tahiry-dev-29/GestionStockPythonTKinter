@@ -1,3 +1,4 @@
+# views/managers/stocks/stock.py
 # stock_window.py
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, Label
@@ -11,6 +12,8 @@ from .update_products import UpdateProductDialog
 from controllers.category_controller import (
     CategoryController,
 )  # pour récupérer les catégories
+from models.product import Product  # Importez le modèle Product ici
+from models.category import Category  # Assurez vous d'importer Category également
 
 
 class StockWindow:
@@ -25,7 +28,7 @@ class StockWindow:
         self.controller = ProductController()
         self.products = (
             {}
-        )  # Dictionary to store displayed products (key = treeview item id)
+        )  # Dictionary to store displayed products (key = treeview item id) - MAINTENANT STOCKE DES OBJETS PRODUCT
         self.all_products = []  # Full product list (for filtering)
         self.images = {}
         self.selected_item_id = None
@@ -248,40 +251,73 @@ class StockWindow:
     def reset_add_flag(self, event=None):
         self._add_dialog_open = False
 
-    def show_edit_dialog(self, product):
-        UpdateProductDialog(
-            self.parent,
-            product,
-            on_update=self.handle_update,
-            on_delete=lambda: self.handle_delete(product),
-        )
+    def show_edit_dialog(
+        self, product_object
+    ):  # `product_object` est maintenant un OBJET Product
+        # **CORRECTION IMPORTANTE : SUPPRESSION DE LA LIGNE INCORRECTE SUIVANTE:**
+        # product_object = Product.from_db_row(product) # LIGNE INCORRECTE À SUPPRIMER - NE PAS UTILISER CETTE LIGNE
+
+        if (
+            product_object
+        ):  # product_object est déjà vérifié comme potentiellement None dans edit_selected_product
+            UpdateProductDialog(
+                self.parent,
+                product_object,  # **Passez l'objet Product directement**
+                on_update=self.handle_update,
+                on_delete=lambda product_to_delete=product_object: self.handle_delete(
+                    product_to_delete
+                ),
+            )
+        else:
+            messagebox.showerror(
+                "Error", "Impossible de charger les détails du produit pour l'édition."
+            )
 
     def edit_selected_product(self):
         if self.selected_item_id:
-            product = self.products.get(self.selected_item_id)
-            if product:
-                self.show_edit_dialog(product)
+            product_object = self.products.get(
+                self.selected_item_id
+            )  # Récupérez l'objet Product directement depuis self.products
+            if product_object:  # Vérifiez que product_object n'est pas None
+                self.show_edit_dialog(
+                    product_object
+                )  # Passez l'objet Product à show_edit_dialog
 
     def delete_selected_product(self):
         if self.selected_item_id:
-            product = self.products.get(self.selected_item_id)
-            if product:
-                self.handle_delete(product)
+            product_object = self.products.get(
+                self.selected_item_id
+            )  # Récupérez l'objet Product
+            if product_object:
+                self.handle_delete(
+                    product_object
+                )  # Passez l'objet Product à handle_delete
 
-    def handle_update(self, updated_product):
+    # stock.py (méthode handle_update corrigée)
+
+    def handle_update(self, updated_data):
         try:
-            self.controller.update_product(updated_product)
+            self.controller.update_product(
+                updated_data["id"],  # product_id
+                updated_data["name"],  # name
+                updated_data["price"],  # price
+                updated_data["quantity"],  # quantity
+                updated_data["photo"],  # photo
+                updated_data["category_id"],  # category_id
+            )
             messagebox.showinfo("Success", "Product updated successfully!")
             self.load_data()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update product: {str(e)}")
 
-    def handle_delete(self, product):
+    def handle_delete(self, product):  # Accepte un objet Product
         try:
             if messagebox.askyesno(
                 "Confirm Delete", "Are you sure you want to delete this product?"
             ):
-                self.controller.delete_product(product["id"])
+                self.controller.delete_product(
+                    product.id
+                )  # Accédez directement à product.id car c'est un objet Product
                 messagebox.showinfo("Success", "Product deleted successfully!")
                 self.load_data()
                 self.selected_item_id = None
@@ -345,35 +381,36 @@ class StockWindow:
             self.tree.set(item, "Price", str(product.price))
             self.tree.set(item, "Created At", created_at)
 
-            self.products[item] = {
-                "id": product.id,
-                "name": product.name,
-                "quantity": product.quantity,
-                "price": product.price,
-                "image": product.photo,
-                "created_at": product.created_at,
-                "category": cat,
-            }
+            # Stockez l'OBJET Product directement dans self.products (Correction importante)
+            self.products[item] = (
+                product  # Stocke l'objet Product ici, au lieu du dictionnaire comme avant
+            )
 
     def show_image_dialog(self):
         if StockWindow._image_dialog_open:
             return
         if self.selected_item_id:
-            product_data = self.products.get(self.selected_item_id)
+            product_data = self.products.get(
+                self.selected_item_id
+            )  # `product_data` est maintenant un objet Product
             if product_data:
                 StockWindow._image_dialog_open = True
-                ImageViewDialog(self.parent, product_data)
+                ImageViewDialog(
+                    self.parent, product_data
+                )  # Passez l'objet Product à ImageViewDialog
 
     def destroy(self):
         self.frame.destroy()
 
 
 class ImageViewDialog(Toplevel):
-    def __init__(self, parent, product_data):
+    def __init__(self, parent, product_data):  # Accepte un objet Product maintenant
         super().__init__(parent)
         self.withdraw()  # Masquer pendant la configuration
-        self.title(f"Image Viewer - Product ID: {product_data['id']}")
-        self.product_data = product_data
+        self.title(
+            f"Image Viewer - Product ID: {product_data.id}"
+        )  # Accédez à product_data.id
+        self.product_data = product_data  # Stockez l'objet Product
         self.protocol("WM_DELETE_WINDOW", self.close_dialog)
         self.setup_ui()
         self.center_window()  # Centrer sur l'écran
@@ -382,7 +419,7 @@ class ImageViewDialog(Toplevel):
     def setup_ui(self):
         container = tk.Frame(self, padx=20, pady=20)
         container.pack(fill="both", expand=True)
-        image_path = self.product_data.get("image")
+        image_path = self.product_data.photo  # Accédez à product_data.photo
         image_display = None
         if image_path:
             try:
@@ -405,29 +442,39 @@ class ImageViewDialog(Toplevel):
         tk.Label(details_frame, text="ID:", font=("Helvetica", 10, "bold")).grid(
             row=0, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(details_frame, text=str(self.product_data["id"])).grid(
+        tk.Label(
+            details_frame, text=str(self.product_data.id)
+        ).grid(  # Accédez à product_data.id
             row=0, column=1, sticky="w", padx=5, pady=2
         )
         tk.Label(details_frame, text="Name:", font=("Helvetica", 10, "bold")).grid(
             row=1, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(details_frame, text=self.product_data["name"]).grid(
+        tk.Label(
+            details_frame, text=self.product_data.name
+        ).grid(  # Accédez à product_data.name
             row=1, column=1, sticky="w", padx=5, pady=2
         )
         tk.Label(details_frame, text="Quantity:", font=("Helvetica", 10, "bold")).grid(
             row=2, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(details_frame, text=str(self.product_data["quantity"])).grid(
+        tk.Label(
+            details_frame, text=str(self.product_data.quantity)
+        ).grid(  # Accédez à product_data.quantity
             row=2, column=1, sticky="w", padx=5, pady=2
         )
         tk.Label(details_frame, text="Price:", font=("Helvetica", 10, "bold")).grid(
             row=3, column=0, sticky="e", padx=5, pady=2
         )
-        tk.Label(details_frame, text=str(self.product_data["price"])).grid(
+        tk.Label(
+            details_frame, text=str(self.product_data.price)
+        ).grid(  # Accédez à product_data.price
             row=3, column=1, sticky="w", padx=5, pady=2
         )
 
-        created_at_str = self.product_data.get("created_at")
+        created_at_str = (
+            self.product_data.created_at
+        )  # Accédez à product_data.created_at
         if isinstance(created_at_str, (datetime.datetime, datetime.date)):
             created_at_str = created_at_str.strftime("%Y-%m-%d %H:%M:%S")
         elif created_at_str is None:
