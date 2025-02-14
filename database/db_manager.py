@@ -188,9 +188,13 @@ class DBManager:
 
     def get_products(self):
         try:
-            # La requête renvoie également le champ created_at
-            self.cursor.execute("SELECT * FROM products")
-            return self.cursor.fetchall()
+            query = """
+                SELECT p.*, c.name as category_name
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+            """
+            self.cursor.execute(query)
+            return self.cursor.fetchall()  # returns a list of dict
         except Error as e:
             logging.error(f"❌ Erreur lors de la récupération des produits: {e}")
             raise

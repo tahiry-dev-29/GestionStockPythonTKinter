@@ -1,5 +1,6 @@
 # Logique métier pour les produits
 from database.db_manager import DBManager
+from models.category import Category
 from models.product import Product
 
 
@@ -17,8 +18,9 @@ class ProductController:
 
     def get_all_products(self):
         products_data = self.db_manager.get_products()
-        return [
-            Product(
+        products = []
+        for prod in products_data:
+            product = Product(
                 id=prod["id"],
                 name=prod["name"],
                 price=prod["price"],
@@ -27,8 +29,12 @@ class ProductController:
                 category_id=prod["category_id"],
                 created_at=prod["created_at"],
             )
-            for prod in products_data
-        ]
+            if product:  # Check if the product was created successfully
+                product.category = Category(
+                    name=prod.get("category_name")
+                )  # Correct attribute name
+                products.append(product)
+        return products
 
     def get_product_by_id(self, product_id):
         product_data = self.db_manager.get_product_by_id(product_id)

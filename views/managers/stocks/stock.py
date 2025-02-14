@@ -25,16 +25,14 @@ class StockWindow:
         self.controller = ProductController()
         self.products = (
             {}
-        )  # Dictionnaire pour stocker les produits affichés (clé = item id du treeview)
-        self.all_products = []  # Liste complète des produits (pour filtrer)
+        )  # Dictionary to store displayed products (key = treeview item id)
+        self.all_products = []  # Full product list (for filtering)
         self.images = {}
         self.selected_item_id = None
         self.edit_button = None
         self.delete_button = None
         self.view_image_button = None
-        self._add_dialog_open = (
-            False  # Flag pour empêcher plusieurs fenêtres "Add" simultanées
-        )
+        self._add_dialog_open = False  # Flag to prevent multiple "Add" windows
 
         self.setup_ui()
 
