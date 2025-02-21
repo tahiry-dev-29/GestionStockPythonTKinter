@@ -7,6 +7,9 @@ from views import (
 from database.db_manager import DBManager
 from styles.colors import BG_COLOR
 from models.user_manager import UserManager
+import os
+from PIL import Image, ImageTk
+from tkinter import TclError
 
 
 class StockManagementApp:
@@ -17,6 +20,11 @@ class StockManagementApp:
         self.db_manager = DBManager()
         self.user_manager = UserManager()
         self.logged_in_user = None
+
+        icon_path = os.path.abspath("./assets/favicon.ico")
+        self.imgicon = ImageTk.PhotoImage(Image.open(icon_path))
+        self.root.tk.call("wm", "iconphoto", self.root._w, self.imgicon)
+
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.show_login()
 
@@ -43,8 +51,11 @@ class StockManagementApp:
             self.current_window.destroy()
         self.current_window = LoginWindow(self.root, self.show_dashboard_after_login)
 
-    def show_dashboard_after_login(self, email):
-        self.show_dashboard(email=email)
+    def show_dashboard_after_login(self, email=None, register=False):
+        if register:
+            self.show_register()
+        else:
+            self.show_dashboard(email=email)
 
     def show_dashboard(self, email=None):
         if self.current_window:

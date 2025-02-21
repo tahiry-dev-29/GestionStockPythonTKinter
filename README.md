@@ -39,11 +39,11 @@ Une application de gestion de stock développée avec Python et Tkinter.
 1. Clonez le repository :
 
 ```bash
-git clone https://github.com/votre-username/GestionStockPythonTKinter.git
+git clone https://github.com/tahiry-dev-29/GestionStockPythonTKinter.git
 cd GestionStockPythonTKinter
 ```
 
-2. Créez un environnement virtuel (optionnel mais recommandé) :
+2. Créez un environnement virtuel (optionnel mais recommandé surtout sur UBUNTU) :
 
 ```bash
 python -m venv venv

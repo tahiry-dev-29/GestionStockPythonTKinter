@@ -1,24 +1,3 @@
-# Liste des dépendances
-
-# 1. mysql-connector-python (ou un autre connecteur MySQL pour Python)
-# pip install mysql-connector-python
-
-# 2. Tkinter
-# pip install tk
-
-# 4. Flask (si tu choisis d'ajouter un backend web dans le futur)
-# pip install flask
-
-# 5. pytest (optionnel, pour les tests)
-# pip install pytest
-
-# reportlab pour générer des rapports PDF (si tu utilises cela dans ton projet) :
-# pip install reportlab
-
-# openpyxl pour générer ou manipuler des fichiers Excel (si nécessaire) :
-# pip install openpyxl
-
-
 mysql-connector-python==8.0.32
 tk
 Pillow
