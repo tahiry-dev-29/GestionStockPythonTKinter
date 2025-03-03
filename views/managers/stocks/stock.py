@@ -269,7 +269,8 @@ class StockWindow:
             )
         else:
             messagebox.showerror(
-                "Error", "Impossible de charger les détails du produit pour l'édition."
+                "Error",
+                "❌ Impossible de charger les détails du produit pour l'édition.",
             )
 
     def edit_selected_product(self):

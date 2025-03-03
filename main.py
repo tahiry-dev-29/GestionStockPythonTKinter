@@ -31,7 +31,7 @@ class StockManagementApp:
     def setup_main_window(self):
         self.root.title("Stock Management System")
         self.root.configure(bg=BG_COLOR)
-        self.center_window(1300, 650)
+        self.center_window(1300, 680)
         self.root.update_idletasks()
 
     def center_window(self, width, height):

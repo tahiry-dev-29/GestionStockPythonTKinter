@@ -277,7 +277,9 @@ class CategoriesView(tk.Frame):
                 messagebox.showinfo("Succès", "Catégorie supprimée avec succès")
             else:
                 messagebox.showerror(
-                    "Erreur", "Impossible de supprimer la catégorie", parent=dialog
+                    "Erreur",
+                    "❌ Impossible de supprimer la catégorie car elle peut etres utilisee sur un produit ",
+                    parent=dialog,
                 )
 
         # Boutons

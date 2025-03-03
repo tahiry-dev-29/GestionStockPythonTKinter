@@ -328,7 +328,9 @@ class DBManager:
             logging.info(f"✅ Category deleted: ID {category_id}")
             return True
         except Error as e:
-            logging.error(f"❌ Error deleting category: {e}")
+            logging.error(
+                f"❌ Error deleting category because it can be used on a product: {e}"
+            )
             self.connection.rollback()
             return False
 

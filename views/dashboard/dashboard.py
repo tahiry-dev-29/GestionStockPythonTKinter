@@ -100,7 +100,7 @@ class DashboardWindow:
     def show_default_view(self):
         self.clear_content()
         if self.logged_in_user:
-            welcome_text = f"Welcome, {self.logged_in_user['username']} ({self.logged_in_user['role']})"
+            welcome_text = f"Welcome, {self.logged_in_user['username']} ({self.logged_in_user['role']}) App By Tahiry L3J2F 4534 MVC POO Python"
         else:
             welcome_text = "Welcome to Dashboard (User not found)"
 
